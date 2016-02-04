@@ -22,8 +22,8 @@ module.exports = function (app, passport, jsdom, fs) {
 	}
 
 	app.route('/').get(function (req, res) {
-		var htmlNavAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-search'></span> All Polls</a></li><li class='nav-pills'><a href='/profile'><span class='glyphicon glyphicon-user'></span> My Polls</a></li><li class='nav-pills'><a href='/logout'><span class='glyphicon glyphicon-remove'></span> Logout</a></li>";
-		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='/'><span class='glyphicon glyphicon-search'></span> All Polls</a></li><li class='nav-pills'><a href='/login'><span class='glyphicon glyphicon-user'></span> Login With Github</a></li>";
+		var htmlNavAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-search'></span> Find Venues</a></li><li class='nav-pills'><a href='/profile'><span class='glyphicon glyphicon-user'></span> My Profile</a></li><li class='nav-pills'><a href='/logout'><span class='glyphicon glyphicon-remove'></span> Logout</a></li>";
+		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='/'><span class='glyphicon glyphicon-search'></span> Find Venues</a></li>";
 		var htmlSourceIndex = null;
 		var pollTemplate = null;
 		fs.readFile(path + "/app/models/poll.html","utf-8", function(err,data){
@@ -51,7 +51,13 @@ module.exports = function (app, passport, jsdom, fs) {
 						console.log('getting polls data from DB');
 						Polls.find({}, function(err, docs) {
 						    if (err) throw err;
-					        if (docs.length == 0) console.log('polls do not exist');
+					        if (docs.length == 0) {
+					        	console.log('polls do not exist');
+					        	console.log("index page DOM manipulations complete");
+								var newHtml = serializeDocument(window.document);
+								res.send(newHtml);
+								window.close();
+					        }
 					        else {
 					        	console.log('at least one poll exists');
 					        	var chartInitialization = "<script>$(document).ready(function(){";

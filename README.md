@@ -1,6 +1,6 @@
-# Voting Application built on Clementine.js FCC Boilerplate
+# Nightlife Coordinator built on Clementine.js FCC Boilerplate
 
-[Voting Application deployed on c9.io](https://voting-app-rfprod.c9users.io/)
+[Nightlife Coordinator deployed on c9.io](https://nightlife-coordinator-rfprod.c9users.io/)
 
 ## Overview
 
