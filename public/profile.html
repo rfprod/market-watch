@@ -18,13 +18,13 @@
 		        <span class="icon-bar"></span>
 		        <span class="icon-bar"></span>
 		      </button>
-		      <a class="navbar-brand" href="https://voting-app-rfprod.c9users.io"><span class="glyphicon glyphicon-stats"></span> Voting App</a> <a class="navbar-brand hidden-xs" href="https://github.com/rfprod/voting-application" target="_blank">GitHub Repo</a>
+		      <a class="navbar-brand" href="https://nightlife-coordinator-rfprod.c9users.io"><span class="glyphicon glyphicon-glass"></span> Nightlife Coordinator</a> <a class="navbar-brand hidden-xs" href="https://github.com/rfprod/nightlife-coordinator" target="_blank">GitHub Repo</a>
 		    </div>
 		    <div class="collapse navbar-collapse" id="toggle-nav">
 		      <div class="container-fluid"> 
 		        <ul class="nav navbar-nav navbar-right">
-		          	<li class="nav-pills"><a href="/"><span class="glyphicon glyphicon-search"></span> All Polls</a></li>
-		          	<li class="nav-pills active"><a href="#app"><span class="glyphicon glyphicon-user"></span> My Polls</a></li>
+		          	<li class="nav-pills"><a href="/"><span class="glyphicon glyphicon-search"></span> Find Venues</a></li>
+		          	<li class="nav-pills active"><a href="#app"><span class="glyphicon glyphicon-user"></span> My Profile</a></li>
 		          	<li class="nav-pills"><a href="/logout"><span class="glyphicon glyphicon-remove"></span> Logout</a></li>
 		        </ul>
 		      </div>
@@ -37,73 +37,21 @@
 		        <div class="output"> 
 		          	<div class="row profile">
 						<img src="/public/img/gh-mark-32px.png" alt="github logo" />
-						<span class="col-xs-12 col-sm-3 col-md-3 col-lg-2">ID: <span id="profile-id" class="profile-value"></span></span>
-						<span class="col-xs-12 col-sm-3 col-md-3 col-lg-2">Username: <span id="profile-username" class="profile-value"></span></span>
-						<span class="col-xs-12 col-sm-3 col-md-3 col-lg-2">Display Name: <span id="display-name" class="profile-value"></span></span>
-						<span class="col-xs-12 col-sm-3 col-md-3 col-lg-2">Repositories: <span id="profile-repos" class="profile-value"></span></span>
-						<span class="col-xs-12 col-sm-6 col-md-6 col-lg-2">Polls: <span id="profile-polls" class="profile-value"></span></span>
-						<span class="col-xs-12 col-sm-6 col-md-6 col-lg-2">My Polls Votes: <span id="profile-votes" class="profile-value"></span></span>
+						<span class="col-xs-12 col-sm-3 col-md-3 col-lg-3">ID: <span id="profile-id" class="profile-value"></span></span>
+						<span class="col-xs-12 col-sm-3 col-md-2 col-lg-2">Username: <span id="profile-username" class="profile-value"></span></span>
+						<span class="col-xs-12 col-sm-3 col-md-2 col-lg-2">Display Name: <span id="display-name" class="profile-value"></span></span>
+						<span class="col-xs-12 col-sm-3 col-md-2 col-lg-2">Repositories: <span id="profile-repos" class="profile-value"></span></span>
+						<span class="col-xs-12 col-sm-12 col-md-2 col-lg-2">RSVPs: <span id="profile-rsvps" class="profile-value"></span></span>
 					</div>
-					<div class="row">
-						<div class="panel-group" id="accordion">
-							<div class="panel panel-primary">
-								<div class="panel-heading" type="button">
-									 <h4 class="panel-title">
-										  <a aria-expanded="false" class="cllps-toggler collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Add New Poll</a>
-									 </h4>
-								</div>
-								<div style="height: 0px;" aria-expanded="false" id="collapseOne" class="panel-collapse collapse">								
-									<div class="panel-body">
-										<div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
-											<form role="form" action="/pollpost/" id="form" method="POST" enctype="application/x-www-form-urlencoded">
-												<div class="form-group">
-											 	   	<label for="owner">Owner ID:</label>
-													<input type="text" class="form-control" name="owner" id="owner" value="" readonly>
-												</div>
-												<div class="form-group">
-											 	   	<label for="name">Display name:</label>
-											 	   	<input type="text" class="form-control" name="name" id="name" placeholder="Poll display name">
-											 	</div>
-												<div class="form-group">
-											 	   	<label for="question">Question:</label>
-											 	   	<input type="text" class="form-control" name="question" id="question" placeholder="Poll question.">
-											 	</div>
-											 	<div class="form-group">
-											 	   	<label for="options">Options:</label>
-											 	   	<input type="text" class="form-control" name="options" id="options" placeholder="separated by comma like: option 1, option 2, option 3 ">
-											 	</div>
-										 		<div class="btn-group btn-group-justified" role="group">
-													<div class="btn-group" role="group">
-														<button id="submit-btn" type="submit" class="btn btn-default btn-success btn-add-poll">Create</button>
-													</div>
-													<div class="btn-group" role="group">
-														<button type="reset" class="btn btn-default btn-danger">Reset</button>
-													</div>
-												</div>
-											</form>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="row">
-						<p id="aggregate-output"></p>
-						<br />
-						<div class="btn-group btn-group-justified" role="group">
-							<div class="btn-group" role="group">
-								<button type="submit" class="btn btn-info btn-aggregate-options">MY POLLS OPTIONS COUNT</button>
-							</div>
-							<div class="btn-group" role="group">
-								<button class="btn btn-warning btn-find-zero-votes">MY POLLS WITH ZERO VOTES</button>
-							</div>
-						</div>
-					</div>
-					<div class="output row polls panel-group" id="accordion">
+					<div class="output row">
+						<div class="well venues"></div>
 					</div>
 		        </div>
 		      </div>
 		    </div>
+		    <div class="credits">
+		  		<a href="https://developer.foursquare.com/overview/attribution?ref=EAORGOU4PZLVFOATMAHSHDOXQAEVIA54WNUZGHAJWW0H12FE" target=_blank>Application uses Foursquare API</a>
+		  	</div>
 		  </div>
 		</div>
 		<script type="text/javascript" src="common/ajax-functions.js"></script>

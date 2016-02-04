@@ -23,12 +23,12 @@ module.exports = function (app, passport, jsdom, fs) {
 
 	app.route('/').get(function (req, res) {
 		var htmlNavAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-search'></span> Find Venues</a></li><li class='nav-pills'><a href='/profile'><span class='glyphicon glyphicon-user'></span> My Profile</a></li><li class='nav-pills'><a href='/logout'><span class='glyphicon glyphicon-remove'></span> Logout</a></li>";
-		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='/'><span class='glyphicon glyphicon-search'></span> Find Venues</a></li>";
+		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='/'><span class='glyphicon glyphicon-search'></span> Find Venues</a></li><li class='nav-pills'><a href='/login'><span class='glyphicon glyphicon-user'></span> Login with Github</a></li>";
 		var htmlSourceIndex = null;
-		var pollTemplate = null;
+		var venueTemplate = null;
 		fs.readFile(path + "/app/models/poll.html","utf-8", function(err,data){
 			if (err) throw err;
-			pollTemplate = data;
+			venueTemplate = data;
 			fs.readFile(path + "/public/index.html", "utf-8", function (err,data) {
 				if (err) throw err;
 			  	htmlSourceIndex = data;
@@ -201,7 +201,7 @@ module.exports = function (app, passport, jsdom, fs) {
 			});
 		});
 	});
-	app.route(/pollpost/).post(isLoggedIn, function(req, res){
+	app.route(/rsvppost/).post(isLoggedIn, function(req, res){
 		var pollOwner = req.body.owner;
     	var pollName = req.body.name;
     	var pollQuestion = req.body.question;
@@ -242,6 +242,7 @@ module.exports = function (app, passport, jsdom, fs) {
     	req.session.valid = true;
   		res.redirect('/profile');
 	});
+	/*
 	app.route(/pollupdate/).post(isLoggedIn, function(req, res){
 		var currentUserId = req.session.passport.user;
 		var pollOwner = "";
@@ -274,7 +275,8 @@ module.exports = function (app, passport, jsdom, fs) {
 	        }
 	    });
 	});
-	app.route(/polldelete/).post(isLoggedIn, function(req, res){
+	*/
+	app.route(/rsvpdelete/).post(isLoggedIn, function(req, res){
 		var currentUserId = req.session.passport.user;
 		var pollOwner = "";
     	var pollId = req.body.pollid;
@@ -298,6 +300,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	        }
 	    });
 	});
+	/*
 	app.route(/votepost/).post(function(req, res){
 		var returnToReferer = req.headers.referer;
 		returnToReferer = returnToReferer.substr(returnToReferer.indexOf(".io")+3,returnToReferer.length);
@@ -318,7 +321,8 @@ module.exports = function (app, passport, jsdom, fs) {
 	    });
     	req.session.valid = true;
   		res.redirect(returnToReferer);
-	}); 
+	});
+	*/
 	app.route('/api/:id').get(isLoggedIn, function (req, res) {
 		res.json(req.user.github);
 	});

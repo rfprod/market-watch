@@ -18,14 +18,11 @@
 		        <span class="icon-bar"></span>
 		        <span class="icon-bar"></span>
 		      </button>
-		      <a class="navbar-brand" href="https://voting-app-rfprod.c9users.io"><span class="glyphicon glyphicon-glass"></span> Nightlife Coordinator</a> <a class="navbar-brand hidden-xs" href="https://github.com/rfprod/nightlife-coordinator" target="_blank">GitHub Repo</a>
+		      <a class="navbar-brand" href="https://nightlife-coordinator-rfprod.c9users.io"><span class="glyphicon glyphicon-glass"></span> Nightlife Coordinator</a> <a class="navbar-brand hidden-xs" href="https://github.com/rfprod/nightlife-coordinator" target="_blank">GitHub Repo</a>
 		    </div>
 		    <div class="collapse navbar-collapse" id="toggle-nav">
 		      <div class="container-fluid"> 
 		        <ul class="nav navbar-nav navbar-right">
-		          	<li class="nav-pills active"><a href="#app"><span class="glyphicon glyphicon-search"></span> All Polls</a></li>
-		          	<li class="nav-pills"><a href="/profile"><span class="glyphicon glyphicon-user"></span> My Polls</a></li>
-		          	<li class="nav-pills"><a href="/logout"><span class="glyphicon glyphicon-remove"></span> Logout</a></li>
 		        </ul>
 		      </div>
 		    </div>
@@ -33,8 +30,19 @@
 		  <a name="app"></a>
 		  <div class="home sect">
 		    <div class="container-fluid">
-		      <div class="col-md-12">
-				<div class="output row polls panel-group" id="accordion">
+		      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+				<div class="srch row">
+					<form role="form" action="/rsvppost/" id="explore-location" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" method="GET" accept-charset="ISO-8859-5, UTF-8, windows-1251">
+						<div class="input-group">
+							<input class="form-control" placeholder="Type desired location name here..." type="text">
+							<span class="input-group-btn">
+								<button id="submit-btn" class="btn btn-default btn-success btn-add-poll" type="submit">Go!</button>
+							</span>
+						</div>
+					</form>
+				</div>
+				<div class="output row">
+					<div class="well venues"></div>
 				</div>
 		      </div>
 		    </div>
@@ -44,12 +52,5 @@
 		  </div>
 		</div>
 		<script type="text/javascript" src="public/js/frontend-utility.js"></script>
-		<script>
-			$(document).ready(function(){
-				var urlHash = window.location.hash;
-				console.log('url hash: '+urlHash);
-				$('a[href="'+urlHash+'"]').trigger('click');
-			});
-		</script>
 	</body>
 </html>
