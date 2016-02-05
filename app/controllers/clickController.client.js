@@ -1,35 +1,30 @@
 'use strict';
 
 (function () {
-   var aggrButton = document.querySelector('.btn-aggregate-options');
-   var findButton = document.querySelector('.btn-find-zero-votes');
-   var aggrOut = document.querySelector('#aggregate-output');
-   var apiUrl = appUrl + '/api/:id/clicks';
-   function updateAggrData (data) {
+   var rsvpButton = document.querySelector('.button-rsvp');
+   var rsvpUndoButton = document.querySelector('.button-rsvp-undo');
+   var exploreButton = document.querySelector('.button-explore');
+   var venuesList = document.querySelector('.venues');
+   var apiUrlLocal = appUrl + '/api/:id/clicks';
+   var apiUrlGetRemote = appUrl + '/api/clicks/venues';
+   function updateVenues (data) {
       var clicksObject = JSON.parse(data);
-      var str = "";
-      clicksObject.forEach(function(entry){
-         str += "<li class='list-group-item'><strong>"+entry.displayName+"</strong> has <strong>"+entry.numberOfOptions+"</strong> options</li>";
-      });
-      aggrOut.innerHTML = str;
-   }
-   function updateFindData (data) {
-      var clicksObject = JSON.parse(data);
-      var str = "";
-      clicksObject.forEach(function(entry){
-         str += "<li class='list-group-item'><strong>"+entry.displayName+"</strong> has <strong>0</strong> votes</li>";
-      });
-      aggrOut.innerHTML = str;
+      var str = clicksObject.explore;
+      venuesList.innerHTML = str;
    }
    //ajaxFunctions.ready(ajaxFunctions.ajaxRequest('GET', apiUrl, updateClickCount));
-   aggrButton.addEventListener('click', function(){
-      //ajaxFunctions.ajaxRequest('POST', apiUrl, function(){
-         ajaxFunctions.ajaxRequest('GET', apiUrl, updateAggrData);
-      //});
+   rsvpButton.addEventListener('click', function(){
+      ajaxFunctions.ajaxRequest('POST', apiUrlLocal, function(){
+         ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote, updateVenues);
+      });
    }, false);
-   findButton.addEventListener('click', function(){
-      //ajaxFunctions.ajaxRequest('DELETE', apiUrl, function(){
-         ajaxFunctions.ajaxRequest('DELETE', apiUrl, updateFindData);
-      //});
+   rsvpUndoButton.addEventListener('click', function(){
+      ajaxFunctions.ajaxRequest('DELETE', apiUrlLocal, function(){
+         ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote, updateVenues);
+      });
    }, false);
+   exploreButton.addEventListener('click', function(){
+      var urlParam = document.getElementsByTagName('input')[0].value;
+      ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote+'?explore='+urlParam, updateVenues);
+   })
 })();

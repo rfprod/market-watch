@@ -9,13 +9,15 @@ p {margin-top:0.5vh;}
 .credits {display:block;text-align:center;font-size:0.75em;}
 .credits a:hover {text-decoration:none;}
 .srch {margin-top:2.5vh;}
-.output {text-align:center;margin-top:2.5vh;}
+.output {margin-top:2.5vh;}
 .output a:hover {text-decoration:none;}
 .profile {margin-top:2vh;}
 .legend {display:block;}
 .chrt-legend {display:inline-block;margin-bottom:0.1em;color:#ffffff;}
 .btn-toolbar {text-align:center;width:auto;max-width:100%;}
 #add-poll {width:100%;}
+#item {border:0;border-radius:0.5em;}
+#item:hover {background-color:#ffffe5;/*border:1px dashed;*/border-radius:0.25em;cursor:default;}
 /****************************/
 /* Clementine default style */
 /********** Fonts ***********/

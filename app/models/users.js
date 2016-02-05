@@ -10,8 +10,8 @@ var User = new Schema({
 		username: String,
         publicRepos: Number
 	},
-	nbrClicks: {
-	    clicks: Number 
+	rsvp: {
+	    venues: Array 
 	}
 });
 
