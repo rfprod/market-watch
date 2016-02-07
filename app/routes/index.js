@@ -10,7 +10,6 @@ module.exports = function (app, passport, jsdom, fs) {
 	
 	var jquerySource = fs.readFileSync(path + "/public/js/jquery.min.js", "utf-8");
 	var serializeDocument = jsdom.serializeDocument;
-	var htmlUIuniformDropdownOption = "<option value='one'>One</option>";
 
 	function isLoggedIn(req, res, next){
 		if (req.isAuthenticated()) return next();
@@ -46,7 +45,8 @@ module.exports = function (app, passport, jsdom, fs) {
 						console.log("index page DOM successfully retrieved");
 						if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
 						else $('.navbar-right').html(htmlNavNotAuthed);
-						$('.venues').append(venueTemplate);
+						//$('.venues').append(venueTemplate);
+						$('.venues').append('Input desired location in the form field above and hit <strong>Find nightclubs around</strong> button to the right of the input field.');
 						var userVenues = "";
 						
 						if (isLoggedInBool(req, res)) {
@@ -181,10 +181,75 @@ module.exports = function (app, passport, jsdom, fs) {
 		.get(isLoggedIn, clickHandler.getClicks)
 		.post(isLoggedIn, clickHandler.addClick)
 		.delete(isLoggedIn, clickHandler.resetClicks);
-	var apiUrlRemote = 'https://api.foursquare.com/v2/venues/explore?client_id='+process.env.FOURSQUARE_KEY+'&client_secret='+process.env.FOURSQUARE_SECRET+'&v=20130815&query=nightclub&near=';
+	var https = require("https");
 	app.route('/api/clicks/venues').get(function(req, res){
 		var locationName = req.url.substring(req.url.indexOf('=')+1,req.url.length);
-		console.log('request url: '+locationName);
-		res.json({"explore":locationName});
+		var foursquareExploreURL = 'https://api.foursquare.com/v2/venues/explore?client_id='+process.env.FOURSQUARE_KEY+'&client_secret='+process.env.FOURSQUARE_SECRET+'&v=20130815&query=nightclub&near='+locationName;
+		console.log('foursquareExploreURL: '+foursquareExploreURL);
+		var foursquareAPIrequest = https.get(foursquareExploreURL, (response) => {
+			response.setEncoding('utf-8');
+			var body = "";
+		  	response.on('data', (chunk) => {body += chunk;});
+		  	response.on('end', () => {
+		  		//res.json(JSON.parse(body));
+		  		var venuesJSON = {};
+		  		// venue id key: response -> groups -> items -> [i] -> venue -> id
+				// venue name key: response -> groups -> items -> [i] -> venue -> name
+				// venue address key: response -> groups -> items -> [i] -> venue -> location -> formattedAddress
+				// venue text tip: response -> groups -> items -> [i] -> tips -> [0] -> text
+				// venue canonical url: response -> groups -> items -> [i] -> tips -> [0] -> canonicalUrl
+				// venue photo url: response -> groups -> items -> [i] -> tips -> [0] -> photourl
+				var json = JSON.parse(body);
+				console.log(json);
+				if (json.response.groups){
+					var items = json.response.groups[0].items;
+					console.log('items: '+JSON.stringify(items));
+					var venueTemplate = null;
+					fs.readFile(path + "/app/models/venue.html", "utf-8", function(err,data){
+						if (err) throw err;
+					  	venueTemplate = data;
+					  	var venueId, venueName, venueAddress, venueLink, venueImgLink, venueTip;
+					  	jsdom.env({
+							html: "",
+							src: [jquerySource],
+							done: function (err, window) {
+								if (err) throw err;
+								var $ = window.$;
+								console.log("index page DOM successfully retrieved");
+								console.log('items.length: '+items.length);
+								for (var i=0;i<items.length;i++){
+									//$('body').append(venueTemplate);
+									$('body').append(venueTemplate);
+									$('.media').last().addClass('item-'+i);
+									venueId = items[i].venue.id;
+					        		venueName = items[i].venue.name;
+					        		//venueAddress = items[i].venue.location.formattedAddress;
+					        		venueLink = items[i].tips[0].canonicalUrl;
+					        		venueImgLink = items[i].tips[0].photourl;
+					        		venueTip = items[i].tips[0].text;
+					        		$('.item-'+i).find('#venue-image').attr('src',venueImgLink);
+					        		$('.item-'+i).find('#link-venue-image').last().attr('href',venueLink);
+					        		$('.item-'+i).find('#link-venue-heading').last().attr('href',venueLink);
+									$('.item-'+i).find('#link-venue-heading').first().html(venueName);
+									if (isLoggedInBool(req, res)) $('.item-'+i).find('.button-rsvp-undo').last().removeClass('hidden');
+									$('.item-'+i).find('#venue-tip').last().html(venueTip);
+								}
+								console.log("index page DOM manipulations complete");
+								var newHtml = serializeDocument(window.document);
+								res.send(newHtml);
+								window.close();
+							}
+						});
+					});
+				}else{
+					res.send(json.meta.errorType+": "+json.meta.errorDetail);
+					//res.send('There was an error getting data from Foursquare AIP. Try again, please.');
+				}
+		  		//res.json(JSON.parse(body));
+		  	});
+		}).on('error', (e) => {
+      		console.log(`Got error: ${e.message}`);
+		});
+		foursquareAPIrequest.end();
 	});
 };

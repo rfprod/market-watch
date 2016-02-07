@@ -4,7 +4,7 @@ body {color:#000000; font-family: 'Play', sans-serif;font-size: 2.2em;overflow-x
 .navbar-brand {font-size: 1em;}
 .cllps-toggler {display:block;text-align:center;color:#ffffff;}
 .cllps-toggler:hover {text-decoration:none;}
-.sect {padding-top: 4vh;}
+.sect {padding-top: 50px;}
 p {margin-top:0.5vh;}
 .credits {display:block;text-align:center;font-size:0.75em;}
 .credits a:hover {text-decoration:none;}
@@ -16,7 +16,7 @@ p {margin-top:0.5vh;}
 .chrt-legend {display:inline-block;margin-bottom:0.1em;color:#ffffff;}
 .btn-toolbar {text-align:center;width:auto;max-width:100%;}
 #add-poll {width:100%;}
-#item {border:0;border-radius:0.5em;}
+#item {border:0;border-radius:0.25em;}
 #item:hover {background-color:#ffffe5;/*border:1px dashed;*/border-radius:0.25em;cursor:default;}
 /****************************/
 /* Clementine default style */

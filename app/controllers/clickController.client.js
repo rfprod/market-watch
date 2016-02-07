@@ -8,21 +8,25 @@
    var apiUrlLocal = appUrl + '/api/:id/clicks';
    var apiUrlGetRemote = appUrl + '/api/clicks/venues';
    function updateVenues (data) {
-      var clicksObject = JSON.parse(data);
-      var str = clicksObject.explore;
-      venuesList.innerHTML = str;
+      //var clicksObject = JSON.parse(data);
+      //var str = clicksObject.explore;
+      venuesList.innerHTML = data;
    }
    //ajaxFunctions.ready(ajaxFunctions.ajaxRequest('GET', apiUrl, updateClickCount));
-   rsvpButton.addEventListener('click', function(){
-      ajaxFunctions.ajaxRequest('POST', apiUrlLocal, function(){
-         ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote, updateVenues);
-      });
-   }, false);
-   rsvpUndoButton.addEventListener('click', function(){
-      ajaxFunctions.ajaxRequest('DELETE', apiUrlLocal, function(){
-         ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote, updateVenues);
-      });
-   }, false);
+   if (rsvpButton){
+      rsvpButton.addEventListener('click', function(){
+         ajaxFunctions.ajaxRequest('POST', apiUrlLocal, function(){
+            ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote, updateVenues);
+         });
+      }, false);
+   }
+   if (rsvpUndoButton){
+      rsvpUndoButton.addEventListener('click', function(){
+         ajaxFunctions.ajaxRequest('DELETE', apiUrlLocal, function(){
+            ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote, updateVenues);
+         });
+      }, false);
+   }
    exploreButton.addEventListener('click', function(){
       var urlParam = document.getElementsByTagName('input')[0].value;
       ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote+'?explore='+urlParam, updateVenues);
