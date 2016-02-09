@@ -31,9 +31,9 @@
 		    <div class="container-fluid">
 		      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
 				<div class="srch row">
-					<form role="form" action="#" id="explore-location" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" method="GET" accept-charset="UTF-8">
+					<form role="form" id="explore-location" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" method="GET" accept-charset="UTF-8">
 						<div class="input-group">
-							<input class="form-control" id="location" placeholder="Type desired location name here..." type="text">
+							<input class="form-control" name="loc" id="location" placeholder="Type desired location name here..." type="text">
 							<span class="input-group-btn">
 								<button id="submit-btn" onclick="return false;" class="btn btn-default btn-success button-explore" type="submit">Nightclubs</button>
 							</span>
@@ -62,6 +62,14 @@
 					var venueId = localStorage.getItem('venueId');
 					console.log('localStorage.length: '+localStorage.length+' | contents: '+JSON.stringify(localStorage));
 					console.log('localStorage.location retrieved: '+localStorage.location+" | "+"localStorage.venueId retrieved: "+localStorage.venueId);
+					if (typeof localStorage.location !== "undefined"){
+						console.log('setting location');
+						$('#location').val(localStorage.location);
+						console.log('triggering click');
+						$('button#submit-btn')[0].click();
+						localStorage.clear();
+						console.log('Cleared localStorage.location: '+localStorage.location+" | "+"localStorage.venueId: "+localStorage.venueId);
+					}
 				}else{
 					console.log('local storage not available');
 				}
