@@ -13,7 +13,10 @@ module.exports = function (app, passport, jsdom, fs) {
 
 	function isLoggedIn(req, res, next){
 		if (req.isAuthenticated()) return next();
-		else res.redirect('/login');
+		else {
+			console.log(req.url.substring(req.url.indexOf('?'),req.url.length));
+			res.redirect('/login'+req.url.substring(req.url.indexOf('?'),req.url.length));
+		}
 	}
 	function isLoggedInBool(req, res, next){
 		if (req.isAuthenticated()) return true;
@@ -46,7 +49,7 @@ module.exports = function (app, passport, jsdom, fs) {
 						if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
 						else $('.navbar-right').html(htmlNavNotAuthed);
 						//$('.venues').append(venueTemplate);
-						$('.venues').append('Input desired location in the form field above and hit <strong>Find nightclubs around</strong> button to the right of the input field.');
+						$('.venues').append('Input desired location in the form field above and hit <strong>Nightclubs</strong> button to the right of the input field.');
 						var userVenues = "";
 						
 						if (isLoggedInBool(req, res)) {
@@ -77,7 +80,9 @@ module.exports = function (app, passport, jsdom, fs) {
 			});
 		});
 	});
-	app.route('/login').get(function (req, res) {res.sendFile(path + '/public/login.html');});
+	app.route('/login').get(function (req, res) {
+		res.sendFile(path + '/public/login.html');
+	});
 	app.route('/logout').get(function (req, res) {
 		req.logout();
 		res.redirect('/login');
@@ -141,12 +146,14 @@ module.exports = function (app, passport, jsdom, fs) {
 			});
 		});
 	});
-	app.route(/rsvppost/).post(isLoggedIn, function(req, res){
+	app.route('/rsvppost').get(isLoggedIn, function(req, res){
+		/*
 		var venueId = req.body.venueid;
 		var venueName = req.body.venuename;
 		var venueLink = req.body.venuelink;
 		var venueImgLink = req.body.venueimglink;
 		var venueTip = req.body.venuetip;
+		*/
 		var dateLog = "";
 			var date = new Date();
 			var year = date.getFullYear();
@@ -164,7 +171,7 @@ module.exports = function (app, passport, jsdom, fs) {
     	req.session.valid = true;
   		res.redirect('/profile');
 	});
-	app.route(/rsvpdelete/).post(isLoggedIn, function(req, res){
+	app.route('/rsvpdelete').post(isLoggedIn, function(req, res){
 		var currentUserId = req.session.passport.user;
     	var venueId = req.body.venueid;
     	console.log('venueId: '+venueId);
@@ -192,7 +199,6 @@ module.exports = function (app, passport, jsdom, fs) {
 		  	response.on('data', (chunk) => {body += chunk;});
 		  	response.on('end', () => {
 		  		//res.json(JSON.parse(body));
-		  		var venuesJSON = {};
 		  		// venue id key: response -> groups -> items -> [i] -> venue -> id
 				// venue name key: response -> groups -> items -> [i] -> venue -> name
 				// venue address key: response -> groups -> items -> [i] -> venue -> location -> formattedAddress
@@ -200,7 +206,7 @@ module.exports = function (app, passport, jsdom, fs) {
 				// venue canonical url: response -> groups -> items -> [i] -> tips -> [0] -> canonicalUrl
 				// venue photo url: response -> groups -> items -> [i] -> tips -> [0] -> photourl
 				var json = JSON.parse(body);
-				console.log(json);
+				//console.log(json);
 				if (json.response.groups){
 					var items = json.response.groups[0].items;
 					console.log('items: '+JSON.stringify(items));
@@ -228,10 +234,15 @@ module.exports = function (app, passport, jsdom, fs) {
 					        		venueImgLink = items[i].tips[0].photourl;
 					        		venueTip = items[i].tips[0].text;
 					        		$('.item-'+i).find('#venue-image').attr('src',venueImgLink);
-					        		$('.item-'+i).find('#link-venue-image').last().attr('href',venueLink);
-					        		$('.item-'+i).find('#link-venue-heading').last().attr('href',venueLink);
-									$('.item-'+i).find('#link-venue-heading').first().html(venueName);
-									if (isLoggedInBool(req, res)) $('.item-'+i).find('.button-rsvp-undo').last().removeClass('hidden');
+					        		$('.item-'+i).find('#link-venue-image').attr('href',venueLink);
+					        		$('.item-'+i).find('#link-venue-heading').attr('href',venueLink);
+									$('.item-'+i).find('#link-venue-heading').html(venueName);
+									$('.item-'+i).find('.button-rsvp').attr('id',i);
+									$('.item-'+i).find('.button-rsvp').attr('href','/rsvppost?location='+locationName+'&venueId='+venueId);
+									if (isLoggedInBool(req, res)) {
+										$('.item-'+i).find('.button-rsvp-undo').removeClass('hidden');
+										$('.item-'+i).find('.button-rsvp-undo').attr('href','/rsvpdelete?location='+locationName+'&venueId'+venueId);
+									}
 									$('.item-'+i).find('#venue-tip').last().html(venueTip);
 								}
 								console.log("index page DOM manipulations complete");

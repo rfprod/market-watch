@@ -9,11 +9,14 @@ function ClickHandler () {
 			});
 	};
 	this.addClick = function (req, res) {
+		//console.log(req.body);
+		/*
 		Usrs.findOne({ 'github.id': req.user.github.id }, { '_id': false })
 			.exec(function (err, result) {
 				if (err) { throw err; }
 				res.json(result.rsvp);
 			});
+		*/
 		/*
 		Usrs.findOneAndUpdate({ 'github.id': req.user.github.id }, { $inc: { 'nbrClicks.clicks': 1 } })
 			.exec(function (err, result) {

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Votin App</title>
+		<title>Nightlife Coordinator</title>
 		<script src="/public/js/jquery.min.js"></script>
 	    <link href="/public/css/bootstrap.min.css" rel="stylesheet">
 	    <script src="/public/js/bootstrap.min.js"></script>
@@ -35,7 +35,7 @@
 						<div class="input-group">
 							<input class="form-control" id="location" placeholder="Type desired location name here..." type="text">
 							<span class="input-group-btn">
-								<button id="submit-btn" class="btn btn-default btn-success button-explore" type="submit">Go!</button>
+								<button id="submit-btn" onclick="return false;" class="btn btn-default btn-success button-explore" type="submit">Nightclubs</button>
 							</span>
 						</div>
 					</form>
@@ -54,5 +54,18 @@
 		<script type="text/javascript" src="common/ajax-functions.js"></script>
 		<script type="text/javascript" src="controllers/clickController.client.js"></script>
 		<!--<script type="text/javascript" src="controllers/userController.client.js"></script>-->
+		<script>
+			$(document).ready(function(){
+				if(typeof(Storage) !== "undefined") {
+					console.log('local storage available, getting params');
+					var location = localStorage.getItem('location');
+					var venueId = localStorage.getItem('venueId');
+					console.log('localStorage.length: '+localStorage.length+' | contents: '+JSON.stringify(localStorage));
+					console.log('localStorage.location retrieved: '+localStorage.location+" | "+"localStorage.venueId retrieved: "+localStorage.venueId);
+				}else{
+					console.log('local storage not available');
+				}
+			});
+		</script>
 	</body>
 </html>
