@@ -6,6 +6,8 @@ var clickHandler = new ClickHandler();
 
 var Usrs = require('../models/users.js');
 
+var https = require("https");
+
 module.exports = function (app, passport, jsdom, fs) {
 	
 	var jquerySource = fs.readFileSync(path + "/public/js/jquery.min.js", "utf-8");
@@ -14,8 +16,12 @@ module.exports = function (app, passport, jsdom, fs) {
 	function isLoggedIn(req, res, next){
 		if (req.isAuthenticated()) return next();
 		else {
-			console.log(req.url.substring(req.url.indexOf('?'),req.url.length));
-			res.redirect('/login'+req.url.substring(req.url.indexOf('?'),req.url.length));
+			if (req.url.indexOf('profile')){
+				res.redirect('/login');
+			}else{
+				console.log(req.url.substring(req.url.indexOf('?'),req.url.length));
+				res.redirect('/login'+req.url.substring(req.url.indexOf('?'),req.url.length));
+			}
 		}
 	}
 	function isLoggedInBool(req, res, next){
@@ -55,7 +61,7 @@ module.exports = function (app, passport, jsdom, fs) {
 						if (isLoggedInBool(req, res)) {
 							Usrs.findOne({ 'github.id': req.user.github.id }, function(err, docs) {
 							    if (err) throw err;
-							    userVenues = docs.rsvp.venues;
+							    userVenues = docs.rsvp.venueIDs;
 								console.log('user RSVPs: '+JSON.stringify(userVenues));
 								/*for (var i=0;i<venueIDs.length;i++){
 					        		pollId = "poll-"+docs[i]._id;
@@ -104,77 +110,140 @@ module.exports = function (app, passport, jsdom, fs) {
 			fs.readFile(path + "/public/profile.html", "utf-8", function (err,data) {
 				if (err) throw err;
 			  	htmlSourceProfile = data;
-			  	jsdom.env({
-					html: htmlSourceProfile,
-					src: [jquerySource],
-					done: function (err, window) {
-						if (err) throw err;
-						var $ = window.$;
-						console.log("index page DOM successfully retrieved");
-						//$('.venues').append(venueTemplate);
-						var userVenues = "";
-						Usrs.findOne({ _id: currentUserPass }, function(err, docs) {
-						    if (err) throw err;
-						    userVenues = docs.rsvp.venues;
-							console.log('user RSVPs: '+JSON.stringify(userVenues));
-							$('#profile-rsvps').html(userVenues.length);
-							if (userVenues.length > 0){
-								/*for (var i=0;i<userVenues.length;i++){
-									$('.venues').append(venueTemplate);
-					        		venueId = userVenues[i].id;
-					        		venueName = userVenues[i].name;
-					        		venueLink = userVenues[i].link;
-					        		venueImgLink = userVenues[i].imglink;
-					        		venueTip = userVenues[i].tip;
-					        		$('#venue-image').last().attr('src',venueImgLink);
-					        		$('#link-venue-image').last().attr('href',venueLink);
-					        		$('#link-venue-heading').last().attr('href',venueLink);
-									$('#link-venue-heading').last().html(venueName);
-									$('.button-rsvp-undo').last().removeClass('hidden');
-									$('#venue-tip').last().hmtl(venueTip);
-					        	}*/
-							}else{
+				Usrs.findOne({ _id: currentUserPass }, function(err, docs) {
+				    if (err) throw err;
+				    var userVenues = docs.rsvp.venueIDs;
+					console.log('user RSVPs: '+JSON.stringify(userVenues)+' | user venueIDs.length: '+userVenues.length);
+					var venueId, foursquareVenueURL, venueName, venueLink, venueImgLink, venueTip;
+					
+					if (userVenues.length > 0){
+						var counter = 0;
+						(function getVenueDetails(){
+			        		venueId = userVenues[counter];
+			        		console.log(venueId);
+			        		foursquareVenueURL = 'https://api.foursquare.com/v2/venues/'+venueId+'?client_id='+process.env.FOURSQUARE_KEY+'&client_secret='+process.env.FOURSQUARE_SECRET+'&v=20130815';
+			        		https.get(foursquareVenueURL, (response) => {
+								response.setEncoding('utf-8');
+								var body = "";
+							  	response.on('data', (chunk) => {body += chunk;});
+							  	response.on('end', () => {
+									var json = JSON.parse(body);
+									if (json.response.venue){
+										var venueDetails = json.response.venue;
+										jsdom.env({
+											html: htmlSourceProfile,
+											src: [jquerySource],
+											done: function (err, window) {
+												if (err) throw err;
+												var $ = window.$;
+												console.log("index page DOM successfully retrieved");
+												$('#profile-rsvps').html(userVenues.length);
+												$('.venues').append(venueTemplate);
+												venueLink = venueDetails.canonicalUrl;
+												venueName = venueDetails.name;
+												venueTip = venueDetails.location.formattedAddress.join();
+												$('#item').attr('id','itm-'+counter);
+												$('#itm-'+counter).find('#venue-image').addClass('hidden');
+								        		$('#itm-'+counter).find('#link-venue-image').attr('href',venueLink);
+								        		$('#itm-'+counter).find('#link-venue-heading').attr('href',venueLink);
+												$('#itm-'+counter).find('#link-venue-heading').html(venueName);
+												$('#itm-'+counter).find('.button-rsvp').addClass('hidden');
+												$('#itm-'+counter).find('.button-rsvp-undo').removeClass('hidden');
+												$('#itm-'+counter).find('.button-rsvp-undo').attr('id',venueId);
+												$('#itm-'+counter).find('#venue-tip').html(venueTip);
+												console.log('counter: '+counter+" | userVenues.length: "+userVenues.length);
+												if (counter == userVenues.length-1){
+													console.log("index page DOM manipulations complete");
+													var newHtml = serializeDocument(window.document);
+													console.log('newHtml is created');
+													res.send(newHtml);
+													window.close();
+												}else{
+													counter++;
+													htmlSourceProfile = serializeDocument(window.document);
+													//console.log(htmlSourceProfile);
+													window.close();
+													getVenueDetails();
+												}
+											}
+										});
+									}else res.send(json.meta.errorType+": "+json.meta.errorDetail);
+							  	});
+							}).on('error', (e) => {
+							  	console.log(`Got error: ${e.message}`);
+							}).on('close', () => {
+								console.log('connection closed');
+							});
+						})();
+					}else{
+						jsdom.env({
+							html: htmlSourceProfile,
+							src: [jquerySource],
+							done: function (err, window) {
+								if (err) throw err;
+								var $ = window.$;
+								console.log("index page DOM successfully retrieved");
+								$('#profile-rsvps').html(userVenues.length);
 								$('.venues').append('You are not planning to attend any venues yet.');
+								console.log("index page DOM manipulations complete");
+								var newHtml = serializeDocument(window.document);
+								res.send(newHtml);
+								window.close();
 							}
-							console.log("index page DOM manipulations complete");
-							var newHtml = serializeDocument(window.document);
-							res.send(newHtml);
-							window.close();
 						});
 					}
 				});
 			});
 		});
 	});
+	function getPrm(url, prm) { // general puspose function for url params retrieval
+	    // prm must not contain any regex characters
+	    var pattern = new RegExp("[?&]" + prm + "=([^&]+)(&|$)");
+	    var match = url.match(pattern);
+	    return(match ? match[1] : "");
+	}
 	app.route('/rsvppost').get(isLoggedIn, function(req, res){
-		/*
-		var venueId = req.body.venueid;
-		var venueName = req.body.venuename;
-		var venueLink = req.body.venuelink;
-		var venueImgLink = req.body.venueimglink;
-		var venueTip = req.body.venuetip;
-		*/
-		var dateLog = "";
-			var date = new Date();
-			var year = date.getFullYear();
-			var month = date.getMonth()+1;
-			if (month <10) month = "0"+month;
-			var day = date.getDate();
-			var hours = date.getHours();
-			var minutes = date.getMinutes();
-			if (minutes <10) minutes = "0"+minutes;
-			dateLog = year+"-"+month+"-"+day+" "+hours+":"+minutes;
-		/*
-		* insert data in DB here
-		*/
-    	var id = null;
-    	req.session.valid = true;
-  		res.redirect('/profile');
+		var locationName = getPrm(req.url,'location');
+		console.log('locationName: '+locationName);
+		var venueId = getPrm(req.url,'venueId');
+		console.log('venueId: '+venueId);
+		Usrs.find({ 'github.id': req.user.github.id }, function(err,data){
+			if (err) throw err;
+			var userRSVPvenues = data[0].rsvp.venueIDs;
+			console.log('userRSVPvenues: '+JSON.stringify(userRSVPvenues));
+			if (userRSVPvenues.indexOf(venueId) == -1) {
+				userRSVPvenues.push(venueId);
+				Usrs.update({ 'github.id': req.user.github.id }, {$set:{'rsvp.venueIDs':userRSVPvenues}}, function(err,data){
+			    	if (err) throw err;
+			        console.log('updated user: '+JSON.stringify(data));
+			        req.session.valid = true;
+  					res.redirect('/profile');
+			    });
+			}
+		});
 	});
-	app.route('/rsvpdelete').post(isLoggedIn, function(req, res){
+	app.route('/rsvpdelete').get(isLoggedIn, function(req, res){
+		console.log('/rsvpdelete');
 		var currentUserId = req.session.passport.user;
-    	var venueId = req.body.venueid;
-    	console.log('venueId: '+venueId);
+    	var venueId = getPrm(req.url,'venueId');
+		console.log('venueId: '+venueId);
+		Usrs.find({ 'github.id': req.user.github.id }, function(err,data){
+			if (err) throw err;
+			var userRSVPvenues = data[0].rsvp.venueIDs;
+			var idIndex = userRSVPvenues.indexOf(venueId);
+			console.log('userRSVPvenues: '+JSON.stringify(userRSVPvenues));
+			console.log('idIndex: '+idIndex);
+			if (userRSVPvenues.length > 1) userRSVPvenues = userRSVPvenues.splice(idIndex, 1);
+			else userRSVPvenues = [];
+			console.log('updated userRSVPvenues: '+JSON.stringify(userRSVPvenues));
+			Usrs.update({ 'github.id': req.user.github.id }, {$set:{'rsvp.venueIDs':userRSVPvenues}}, function(err,data){
+		    	if (err) throw err;
+		        console.log('updated user: '+JSON.stringify(data));
+		        req.session.valid = true;
+		        
+  				res.redirect('/profile'); // this does not redirect actually
+		    });
+		});
 	});
 	app.route('/api/:id').get(isLoggedIn, function(req, res){
 		res.json(req.user.github);
@@ -188,7 +257,7 @@ module.exports = function (app, passport, jsdom, fs) {
 		.get(isLoggedIn, clickHandler.getClicks)
 		.post(isLoggedIn, clickHandler.addClick)
 		.delete(isLoggedIn, clickHandler.resetClicks);
-	var https = require("https");
+	
 	app.route('/api/clicks/venues').get(function(req, res){
 		var locationName = req.url.substring(req.url.indexOf('=')+1,req.url.length);
 		var foursquareExploreURL = 'https://api.foursquare.com/v2/venues/explore?client_id='+process.env.FOURSQUARE_KEY+'&client_secret='+process.env.FOURSQUARE_SECRET+'&v=20130815&query=nightclub&near='+locationName;

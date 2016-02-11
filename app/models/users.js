@@ -11,7 +11,7 @@ var User = new Schema({
         publicRepos: Number
 	},
 	rsvp: {
-	    venues: Array 
+	    venueIDs: Array 
 	}
 });
 

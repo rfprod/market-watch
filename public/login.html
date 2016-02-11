@@ -65,11 +65,8 @@
 						localStorage.setItem('location',location);
 						localStorage.setItem('venueId',venueId);
 						console.log('localStorage.location retrieved: '+localStorage.location+" | "+"localStorage.venueId retrieved: "+localStorage.venueId);
-					}else{
-						console.log('local storage not available');
-					}
-				} 
-				else console.log('does not contain params');
+					} else console.log('local storage not available');
+				} else console.log('does not contain params');
 				
 				function getPrm(url, prm) {
 				    // prm must not contain any regex characters

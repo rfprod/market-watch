@@ -3,16 +3,30 @@
 (function () {
    var exploreButton = document.querySelector('.button-explore');
    var venuesList = document.querySelector('.venues');
+   var undoRSVP = document.getElementsByClassName('button-rsvp-undo');
+   console.log(JSON.stringify(undoRSVP));
    var apiUrlClicks = appUrl + '/api/:id/clicks';
    var apiUrlGetRemote = appUrl + '/api/clicks/venues';
+   var apiUrlUndoRSVP = appUrl + '/rsvpdelete';
    function updateVenues (data) {
       //var clicksObject = JSON.parse(data);
       //var str = clicksObject.explore;
       venuesList.innerHTML = data;
    }
-   //ajaxFunctions.ready(ajaxFunctions.ajaxRequest('GET', apiUrl, updateClickCount));
-   exploreButton.addEventListener('click', function(){
-      var urlParam = document.getElementsByTagName('input')[0].value;
-      ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote+'?explore='+urlParam, updateVenues);
-   })
+   if (exploreButton){
+      exploreButton.addEventListener('click', function(){
+         var urlParam = document.getElementsByTagName('input')[0].value;
+         ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote+'?explore='+urlParam, updateVenues);
+      });
+   }
+   if (undoRSVP){
+      for (var i=0;i<undoRSVP.length;i++){
+         undoRSVP[i].addEventListener('click', function(){
+            var venueId = $(this).attr('id');
+            console.log(venueId);
+            ajaxFunctions.ajaxRequest('GET', apiUrlUndoRSVP+'?venueId='+venueId, function(res){});
+         });
+      }
+   }
+   
 })();
