@@ -36,7 +36,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	        else console.log('users exist: '+JSON.stringify(docs));
 		});
 		var htmlNavAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-search'></span> Find Venues</a></li><li class='nav-pills'><a href='/profile'><span class='glyphicon glyphicon-user'></span> My Profile</a></li><li class='nav-pills'><a href='/logout'><span class='glyphicon glyphicon-remove'></span> Logout</a></li>";
-		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='/'><span class='glyphicon glyphicon-search'></span> Find Venues</a></li><li class='nav-pills'><a href='/login'><span class='glyphicon glyphicon-user'></span> Login with Github</a></li>";
+		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='/'><span class='glyphicon glyphicon-search'></span> Find Venues</a></li><li class='nav-pills'><a id='login-href' href='/login'><span class='glyphicon glyphicon-user'></span> Login with Github</a></li>";
 		var htmlSourceIndex = null;
 		var venueTemplate = null;
 		fs.readFile(path + "/app/models/venue.html","utf-8", function(err,data){
@@ -54,22 +54,17 @@ module.exports = function (app, passport, jsdom, fs) {
 						console.log("index page DOM successfully retrieved");
 						if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
 						else $('.navbar-right').html(htmlNavNotAuthed);
-						//$('.venues').append(venueTemplate);
 						$('.venues').append('Input desired location in the form field above and hit <strong>Nightclubs</strong> button to the right of the input field.');
 						var userVenues = "";
-						
 						if (isLoggedInBool(req, res)) {
 							Usrs.findOne({ 'github.id': req.user.github.id }, function(err, docs) {
 							    if (err) throw err;
 							    userVenues = docs.rsvp.venueIDs;
 								console.log('user RSVPs: '+JSON.stringify(userVenues));
-								/*for (var i=0;i<venueIDs.length;i++){
-					        		pollId = "poll-"+docs[i]._id;
-					        		pollName = docs[i].displayName;
-									$('.poll-heading').last().html(pollName);
-									$('.poll-heading').last().attr('href','#'+pollId);
-									$('.poll-internals').last().attr('id',pollId);
-					        	}*/
+								/*
+								* here may be retrieval of user preferred location, which may be saved as part of user profile
+								* followed by automated location explore
+								*/
 								console.log("index page DOM manipulations complete");
 								var newHtml = serializeDocument(window.document);
 								res.send(newHtml);
@@ -95,13 +90,6 @@ module.exports = function (app, passport, jsdom, fs) {
 	});
 	app.route('/profile').get(isLoggedIn, function (req, res) {
 		var currentUserPass = req.session.passport.user;
-		/*
-		Usrs.find({}, function(err, docs) {
-		    if (err) throw err;
-	        if (docs.length == 0) console.log('users do not exist: '+JSON.stringify(docs));
-	        else console.log('users exist: '+JSON.stringify(docs));
-		});
-		*/
 		var htmlSourceProfile = null;
 		var venueTemplate = null;
 		fs.readFile(path + "/app/models/venue.html","utf-8", function(err,data){
@@ -114,8 +102,7 @@ module.exports = function (app, passport, jsdom, fs) {
 				    if (err) throw err;
 				    var userVenues = docs.rsvp.venueIDs;
 					console.log('user RSVPs: '+JSON.stringify(userVenues)+' | user venueIDs.length: '+userVenues.length);
-					var venueId, foursquareVenueURL, venueName, venueLink, venueImgLink, venueTip;
-					
+					var venueId, foursquareVenueURL, venueName, venuePhone, venueAddress, venueLink, venueImgLink;
 					if (userVenues.length > 0){
 						var counter = 0;
 						(function getVenueDetails(){
@@ -141,16 +128,18 @@ module.exports = function (app, passport, jsdom, fs) {
 												$('.venues').append(venueTemplate);
 												venueLink = venueDetails.canonicalUrl;
 												venueName = venueDetails.name;
-												venueTip = venueDetails.location.formattedAddress.join();
+												venuePhone = venueDetails.contact.formattedPhone;
+												venueAddress = venueDetails.location.formattedAddress.join();
 												$('#item').attr('id','itm-'+counter);
-												$('#itm-'+counter).find('#venue-image').addClass('hidden');
+												//$('#itm-'+counter).find('#venue-image').addClass('hidden');
+												$('.item-'+counter).find('#venue-image').attr('src',venueImgLink);
 								        		$('#itm-'+counter).find('#link-venue-image').attr('href',venueLink);
 								        		$('#itm-'+counter).find('#link-venue-heading').attr('href',venueLink);
 												$('#itm-'+counter).find('#link-venue-heading').html(venueName);
 												$('#itm-'+counter).find('.button-rsvp').addClass('hidden');
 												$('#itm-'+counter).find('.button-rsvp-undo').removeClass('hidden');
 												$('#itm-'+counter).find('.button-rsvp-undo').attr('id',venueId);
-												$('#itm-'+counter).find('#venue-tip').html(venueTip);
+												$('#itm-'+counter).find('#venue-tip').html('Address: '+venueAddress+'<br/>Phone number: '+venuePhone);
 												console.log('counter: '+counter+" | userVenues.length: "+userVenues.length);
 												if (counter == userVenues.length-1){
 													console.log("index page DOM manipulations complete");
@@ -161,7 +150,6 @@ module.exports = function (app, passport, jsdom, fs) {
 												}else{
 													counter++;
 													htmlSourceProfile = serializeDocument(window.document);
-													//console.log(htmlSourceProfile);
 													window.close();
 													getVenueDetails();
 												}
@@ -233,8 +221,11 @@ module.exports = function (app, passport, jsdom, fs) {
 			var idIndex = userRSVPvenues.indexOf(venueId);
 			console.log('userRSVPvenues: '+JSON.stringify(userRSVPvenues));
 			console.log('idIndex: '+idIndex);
-			if (userRSVPvenues.length > 1) userRSVPvenues = userRSVPvenues.splice(idIndex, 1);
-			else userRSVPvenues = [];
+			if (userRSVPvenues.length == 1) userRSVPvenues = [];
+			else if (userRSVPvenues.length > 1) {
+				if (idIndex == userRSVPvenues.length-1) userRSVPvenues.pop();
+				else userRSVPvenues.splice(idIndex, 1);
+			}
 			console.log('updated userRSVPvenues: '+JSON.stringify(userRSVPvenues));
 			Usrs.update({ 'github.id': req.user.github.id }, {$set:{'rsvp.venueIDs':userRSVPvenues}}, function(err,data){
 		    	if (err) throw err;
@@ -267,18 +258,10 @@ module.exports = function (app, passport, jsdom, fs) {
 			var body = "";
 		  	response.on('data', (chunk) => {body += chunk;});
 		  	response.on('end', () => {
-		  		//res.json(JSON.parse(body));
-		  		// venue id key: response -> groups -> items -> [i] -> venue -> id
-				// venue name key: response -> groups -> items -> [i] -> venue -> name
-				// venue address key: response -> groups -> items -> [i] -> venue -> location -> formattedAddress
-				// venue text tip: response -> groups -> items -> [i] -> tips -> [0] -> text
-				// venue canonical url: response -> groups -> items -> [i] -> tips -> [0] -> canonicalUrl
-				// venue photo url: response -> groups -> items -> [i] -> tips -> [0] -> photourl
 				var json = JSON.parse(body);
-				//console.log(json);
 				if (json.response.groups){
 					var items = json.response.groups[0].items;
-					console.log('items: '+JSON.stringify(items));
+					//console.log('items: '+JSON.stringify(items));
 					var venueTemplate = null;
 					fs.readFile(path + "/app/models/venue.html", "utf-8", function(err,data){
 						if (err) throw err;
@@ -292,40 +275,68 @@ module.exports = function (app, passport, jsdom, fs) {
 								var $ = window.$;
 								console.log("index page DOM successfully retrieved");
 								console.log('items.length: '+items.length);
-								for (var i=0;i<items.length;i++){
-									//$('body').append(venueTemplate);
-									$('body').append(venueTemplate);
-									$('.media').last().addClass('item-'+i);
-									venueId = items[i].venue.id;
-					        		venueName = items[i].venue.name;
-					        		//venueAddress = items[i].venue.location.formattedAddress;
-					        		venueLink = items[i].tips[0].canonicalUrl;
-					        		venueImgLink = items[i].tips[0].photourl;
-					        		venueTip = items[i].tips[0].text;
-					        		$('.item-'+i).find('#venue-image').attr('src',venueImgLink);
-					        		$('.item-'+i).find('#link-venue-image').attr('href',venueLink);
-					        		$('.item-'+i).find('#link-venue-heading').attr('href',venueLink);
-									$('.item-'+i).find('#link-venue-heading').html(venueName);
-									$('.item-'+i).find('.button-rsvp').attr('id',i);
-									$('.item-'+i).find('.button-rsvp').attr('href','/rsvppost?location='+locationName+'&venueId='+venueId);
-									if (isLoggedInBool(req, res)) {
-										$('.item-'+i).find('.button-rsvp-undo').removeClass('hidden');
-										$('.item-'+i).find('.button-rsvp-undo').attr('href','/rsvpdelete?location='+locationName+'&venueId'+venueId);
+								var userVenues;
+								if (isLoggedInBool(req, res)) {
+									Usrs.findOne({ 'github.id': req.user.github.id }, function(err, docs) {
+									    if (err) throw err;
+									    userVenues = docs.rsvp.venueIDs;
+										console.log('user RSVPs: '+JSON.stringify(userVenues));
+										for (var i=0;i<items.length;i++){
+											$('body').append(venueTemplate);
+											$('.media').last().addClass('item-'+i);
+											venueId = items[i].venue.id;
+							        		venueName = items[i].venue.name;
+							        		venueAddress = items[i].venue.location.formattedAddress;
+							        		venueLink = items[i].tips[0].canonicalUrl;
+							        		venueImgLink = items[i].tips[0].photourl;
+							        		venueTip = items[i].tips[0].text;
+							        		$('.item-'+i).find('#venue-image').attr('src',venueImgLink);
+							        		$('.item-'+i).find('#link-venue-image').attr('href',venueLink);
+							        		$('.item-'+i).find('#link-venue-heading').attr('href',venueLink);
+											$('.item-'+i).find('#link-venue-heading').html(venueName);
+											$('.item-'+i).find('.button-rsvp').attr('id',i);
+											$('.item-'+i).find('.button-rsvp').attr('href','/rsvppost?location='+locationName+'&venueId='+venueId);
+											if (userVenues.indexOf(venueId) !== -1) {
+												$('.item-'+i).find('.button-rsvp').addClass('hidden');
+												$('.item-'+i).find('.button-rsvp-undo').removeClass('hidden');
+												$('.item-'+i).find('.button-rsvp-undo').attr('href','/rsvpdelete?location='+locationName+'&venueId'+venueId);
+											}
+											$('.item-'+i).find('#venue-tip').html('Address: '+venueAddress+'<br/>Tip: '+venueTip);
+										}
+										console.log("index page DOM manipulations complete");
+										var newHtml = serializeDocument(window.document);
+										res.send(newHtml);
+										window.close();
+									});
+								}else{
+									for (var i=0;i<items.length;i++){
+										$('body').append(venueTemplate);
+										$('.media').last().addClass('item-'+i);
+										venueId = items[i].venue.id;
+						        		venueName = items[i].venue.name;
+						        		venueAddress = items[i].venue.location.formattedAddress;
+						        		venueLink = items[i].tips[0].canonicalUrl;
+						        		venueImgLink = items[i].tips[0].photourl;
+						        		venueTip = items[i].tips[0].text;
+						        		$('.item-'+i).find('#venue-image').attr('src',venueImgLink);
+						        		$('.item-'+i).find('#link-venue-image').attr('href',venueLink);
+						        		$('.item-'+i).find('#link-venue-heading').attr('href',venueLink);
+										$('.item-'+i).find('#link-venue-heading').html(venueName);
+										$('.item-'+i).find('.button-rsvp').attr('id',i);
+										$('.item-'+i).find('.button-rsvp').attr('href','/rsvppost?location='+locationName+'&venueId='+venueId);
+										$('.item-'+i).find('#venue-tip').last().html('Address: '+venueAddress+'<br/>Tip: '+venueTip);
 									}
-									$('.item-'+i).find('#venue-tip').last().html(venueTip);
+									console.log("index page DOM manipulations complete");
+									var newHtml = serializeDocument(window.document);
+									res.send(newHtml);
+									window.close();
 								}
-								console.log("index page DOM manipulations complete");
-								var newHtml = serializeDocument(window.document);
-								res.send(newHtml);
-								window.close();
 							}
 						});
 					});
 				}else{
 					res.send(json.meta.errorType+": "+json.meta.errorDetail);
-					//res.send('There was an error getting data from Foursquare AIP. Try again, please.');
 				}
-		  		//res.json(JSON.parse(body));
 		  	});
 		}).on('error', (e) => {
       		console.log(`Got error: ${e.message}`);

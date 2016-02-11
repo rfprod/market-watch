@@ -4,6 +4,7 @@
    var exploreButton = document.querySelector('.button-explore');
    var venuesList = document.querySelector('.venues');
    var undoRSVP = document.getElementsByClassName('button-rsvp-undo');
+   var loginHref = document.querySelector('#login-href');
    console.log(JSON.stringify(undoRSVP));
    var apiUrlClicks = appUrl + '/api/:id/clicks';
    var apiUrlGetRemote = appUrl + '/api/clicks/venues';
@@ -16,6 +17,7 @@
    if (exploreButton){
       exploreButton.addEventListener('click', function(){
          var urlParam = document.getElementsByTagName('input')[0].value;
+         if (loginHref) loginHref.setAttribute('href','/login?location='+urlParam);
          ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote+'?explore='+urlParam, updateVenues);
       });
    }

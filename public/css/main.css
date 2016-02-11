@@ -16,8 +16,9 @@ p {margin-top:0.5vh;}
 .chrt-legend {display:inline-block;margin-bottom:0.1em;color:#ffffff;}
 .btn-toolbar {text-align:center;width:auto;max-width:100%;}
 #add-poll {width:100%;}
-#item {border:0;border-radius:0.25em;}
-#item:hover {background-color:#ffffe5;/*border:1px dashed;*/border-radius:0.25em;cursor:default;}
+.media {border:0;border-radius:0.25em;}
+.media:hover {background-color:#ffffe5;/*border:1px dashed;*/border-radius:0.25em;cursor:default;}
+.fl-right{float:right;}
 /****************************/
 /* Clementine default style */
 /********** Fonts ***********/
