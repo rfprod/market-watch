@@ -16,7 +16,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	function isLoggedIn(req, res, next){
 		if (req.isAuthenticated()) return next();
 		else {
-			if (req.url.indexOf('profile')){
+			if (req.url.indexOf('profile') != -1){
 				res.redirect('/login');
 			}else{
 				console.log(req.url.substring(req.url.indexOf('?'),req.url.length));
@@ -89,97 +89,113 @@ module.exports = function (app, passport, jsdom, fs) {
 		res.redirect('/login');
 	});
 	app.route('/profile').get(isLoggedIn, function (req, res) {
-		var currentUserPass = req.session.passport.user;
-		var htmlSourceProfile = null;
-		var venueTemplate = null;
-		fs.readFile(path + "/app/models/venue.html","utf-8", function(err,data){
-			if (err) throw err;
-			venueTemplate = data;
-			fs.readFile(path + "/public/profile.html", "utf-8", function (err,data) {
+		
+		var allRSVPs = [];
+	   	Usrs.find().stream().on('data', function(doc){
+			console.log('stream: '+JSON.stringify(doc));
+			var allVenueIDs = doc.rsvp.venueIDs;
+			for (var i=0;i<allVenueIDs.length;i++) allRSVPs.push(allVenueIDs[i]);
+			console.log('allRSVPs: '+JSON.stringify(allRSVPs));
+	  	}).on('error', function(err){
+	    	throw err;
+	  	}).on('end', function(){
+	    	console.log('stream end');
+		
+			var currentUserPass = req.session.passport.user;
+			var htmlSourceProfile = null;
+			var venueTemplate = null;
+			fs.readFile(path + "/app/models/venue.html","utf-8", function(err,data){
 				if (err) throw err;
-			  	htmlSourceProfile = data;
-				Usrs.findOne({ _id: currentUserPass }, function(err, docs) {
-				    if (err) throw err;
-				    var userVenues = docs.rsvp.venueIDs;
-					console.log('user RSVPs: '+JSON.stringify(userVenues)+' | user venueIDs.length: '+userVenues.length);
-					var venueId, foursquareVenueURL, venueName, venuePhone, venueAddress, venueLink, venueImgLink;
-					if (userVenues.length > 0){
-						var counter = 0;
-						(function getVenueDetails(){
-			        		venueId = userVenues[counter];
-			        		console.log(venueId);
-			        		foursquareVenueURL = 'https://api.foursquare.com/v2/venues/'+venueId+'?client_id='+process.env.FOURSQUARE_KEY+'&client_secret='+process.env.FOURSQUARE_SECRET+'&v=20130815';
-			        		https.get(foursquareVenueURL, (response) => {
-								response.setEncoding('utf-8');
-								var body = "";
-							  	response.on('data', (chunk) => {body += chunk;});
-							  	response.on('end', () => {
-									var json = JSON.parse(body);
-									if (json.response.venue){
-										var venueDetails = json.response.venue;
-										jsdom.env({
-											html: htmlSourceProfile,
-											src: [jquerySource],
-											done: function (err, window) {
-												if (err) throw err;
-												var $ = window.$;
-												console.log("index page DOM successfully retrieved");
-												$('#profile-rsvps').html(userVenues.length);
-												$('.venues').append(venueTemplate);
-												venueLink = venueDetails.canonicalUrl;
-												venueName = venueDetails.name;
-												venuePhone = venueDetails.contact.formattedPhone;
-												venueAddress = venueDetails.location.formattedAddress.join();
-												$('#item').attr('id','itm-'+counter);
-												//$('#itm-'+counter).find('#venue-image').addClass('hidden');
-												$('.item-'+counter).find('#venue-image').attr('src',venueImgLink);
-								        		$('#itm-'+counter).find('#link-venue-image').attr('href',venueLink);
-								        		$('#itm-'+counter).find('#link-venue-heading').attr('href',venueLink);
-												$('#itm-'+counter).find('#link-venue-heading').html(venueName);
-												$('#itm-'+counter).find('.button-rsvp').addClass('hidden');
-												$('#itm-'+counter).find('.button-rsvp-undo').removeClass('hidden');
-												$('#itm-'+counter).find('.button-rsvp-undo').attr('id',venueId);
-												$('#itm-'+counter).find('#venue-tip').html('Address: '+venueAddress+'<br/>Phone number: '+venuePhone);
-												console.log('counter: '+counter+" | userVenues.length: "+userVenues.length);
-												if (counter == userVenues.length-1){
-													console.log("index page DOM manipulations complete");
-													var newHtml = serializeDocument(window.document);
-													console.log('newHtml is created');
-													res.send(newHtml);
-													window.close();
-												}else{
-													counter++;
-													htmlSourceProfile = serializeDocument(window.document);
-													window.close();
-													getVenueDetails();
+				venueTemplate = data;
+				fs.readFile(path + "/public/profile.html", "utf-8", function (err,data) {
+					if (err) throw err;
+				  	htmlSourceProfile = data;
+					Usrs.findOne({ _id: currentUserPass }, function(err, docs) {
+					    if (err) throw err;
+					    var userVenues = docs.rsvp.venueIDs;
+						console.log('user RSVPs: '+JSON.stringify(userVenues)+' | user venueIDs.length: '+userVenues.length);
+						var venueId, foursquareVenueURL, venueName, venuePhone, venueAddress, venueLink, venueImgLink;
+						if (userVenues.length > 0){
+							var counter = 0;
+							(function getVenueDetails(){
+				        		venueId = userVenues[counter];
+				        		console.log(venueId);
+				        		foursquareVenueURL = 'https://api.foursquare.com/v2/venues/'+venueId+'?client_id='+process.env.FOURSQUARE_KEY+'&client_secret='+process.env.FOURSQUARE_SECRET+'&v=20130815';
+				        		https.get(foursquareVenueURL, (response) => {
+									response.setEncoding('utf-8');
+									var body = "";
+								  	response.on('data', (chunk) => {body += chunk;});
+								  	response.on('end', () => {
+										var json = JSON.parse(body);
+										if (json.response.venue){
+											var venueDetails = json.response.venue;
+											jsdom.env({
+												html: htmlSourceProfile,
+												src: [jquerySource],
+												done: function (err, window) {
+													if (err) throw err;
+													var $ = window.$;
+													console.log("index page DOM successfully retrieved");
+													$('#profile-rsvps').html(userVenues.length);
+													$('.venues').append(venueTemplate);
+													venueLink = venueDetails.canonicalUrl;
+													venueName = venueDetails.name;
+													var rsvpCounter = 0;
+													for (var z=0;z<allRSVPs.length;z++) if (allRSVPs[z] == venueId) rsvpCounter++;
+													venuePhone = venueDetails.contact.formattedPhone;
+													venueAddress = venueDetails.location.formattedAddress.join();
+													$('#item').attr('id','itm-'+counter);
+													//$('#itm-'+counter).find('#venue-image').addClass('hidden');
+													$('.item-'+counter).find('#venue-image').attr('src',venueImgLink);
+									        		$('#itm-'+counter).find('#link-venue-image').attr('href',venueLink);
+									        		$('#itm-'+counter).find('#link-venue-heading').attr('href',venueLink);
+													$('#itm-'+counter).find('#link-venue-heading').html(venueName);
+													$('#itm-'+counter).find('#attendees-count').html(rsvpCounter);
+													$('#itm-'+counter).find('.button-rsvp').addClass('hidden');
+													$('#itm-'+counter).find('.button-rsvp-undo').removeClass('hidden');
+													$('#itm-'+counter).find('.button-rsvp-undo').attr('id',venueId);
+													$('#itm-'+counter).find('#venue-tip').html('Address: '+venueAddress+'<br/>Phone number: '+venuePhone);
+													console.log('counter: '+counter+" | userVenues.length: "+userVenues.length);
+													if (counter == userVenues.length-1){
+														console.log("index page DOM manipulations complete");
+														var newHtml = serializeDocument(window.document);
+														console.log('newHtml is created');
+														res.send(newHtml);
+														window.close();
+													}else{
+														counter++;
+														htmlSourceProfile = serializeDocument(window.document);
+														window.close();
+														getVenueDetails();
+													}
 												}
-											}
-										});
-									}else res.send(json.meta.errorType+": "+json.meta.errorDetail);
-							  	});
-							}).on('error', (e) => {
-							  	console.log(`Got error: ${e.message}`);
-							}).on('close', () => {
-								console.log('connection closed');
+											});
+										}else res.send(json.meta.errorType+": "+json.meta.errorDetail);
+								  	});
+								}).on('error', (e) => {
+								  	console.log(`Got error: ${e.message}`);
+								}).on('close', () => {
+									console.log('connection closed');
+								});
+							})();
+						}else{
+							jsdom.env({
+								html: htmlSourceProfile,
+								src: [jquerySource],
+								done: function (err, window) {
+									if (err) throw err;
+									var $ = window.$;
+									console.log("index page DOM successfully retrieved");
+									$('#profile-rsvps').html(userVenues.length);
+									$('.venues').append('You are not planning to attend any venues yet.');
+									console.log("index page DOM manipulations complete");
+									var newHtml = serializeDocument(window.document);
+									res.send(newHtml);
+									window.close();
+								}
 							});
-						})();
-					}else{
-						jsdom.env({
-							html: htmlSourceProfile,
-							src: [jquerySource],
-							done: function (err, window) {
-								if (err) throw err;
-								var $ = window.$;
-								console.log("index page DOM successfully retrieved");
-								$('#profile-rsvps').html(userVenues.length);
-								$('.venues').append('You are not planning to attend any venues yet.');
-								console.log("index page DOM manipulations complete");
-								var newHtml = serializeDocument(window.document);
-								res.send(newHtml);
-								window.close();
-							}
-						});
-					}
+						}
+					});
 				});
 			});
 		});
@@ -248,99 +264,127 @@ module.exports = function (app, passport, jsdom, fs) {
 		.get(isLoggedIn, clickHandler.getClicks)
 		.post(isLoggedIn, clickHandler.addClick)
 		.delete(isLoggedIn, clickHandler.resetClicks);
-	
 	app.route('/api/clicks/venues').get(function(req, res){
-		var locationName = req.url.substring(req.url.indexOf('=')+1,req.url.length);
-		var foursquareExploreURL = 'https://api.foursquare.com/v2/venues/explore?client_id='+process.env.FOURSQUARE_KEY+'&client_secret='+process.env.FOURSQUARE_SECRET+'&v=20130815&query=nightclub&near='+locationName;
-		console.log('foursquareExploreURL: '+foursquareExploreURL);
-		var foursquareAPIrequest = https.get(foursquareExploreURL, (response) => {
-			response.setEncoding('utf-8');
-			var body = "";
-		  	response.on('data', (chunk) => {body += chunk;});
-		  	response.on('end', () => {
-				var json = JSON.parse(body);
-				if (json.response.groups){
-					var items = json.response.groups[0].items;
-					//console.log('items: '+JSON.stringify(items));
-					var venueTemplate = null;
-					fs.readFile(path + "/app/models/venue.html", "utf-8", function(err,data){
-						if (err) throw err;
-					  	venueTemplate = data;
-					  	var venueId, venueName, venueAddress, venueLink, venueImgLink, venueTip;
-					  	jsdom.env({
-							html: "",
-							src: [jquerySource],
-							done: function (err, window) {
-								if (err) throw err;
-								var $ = window.$;
-								console.log("index page DOM successfully retrieved");
-								console.log('items.length: '+items.length);
-								var userVenues;
-								if (isLoggedInBool(req, res)) {
-									Usrs.findOne({ 'github.id': req.user.github.id }, function(err, docs) {
-									    if (err) throw err;
-									    userVenues = docs.rsvp.venueIDs;
-										console.log('user RSVPs: '+JSON.stringify(userVenues));
+		var allRSVPs = [];
+	   	Usrs.find().stream().on('data', function(doc){
+			console.log('stream: '+JSON.stringify(doc));
+			var allVenueIDs = doc.rsvp.venueIDs;
+			for (var i=0;i<allVenueIDs.length;i++) allRSVPs.push(allVenueIDs[i]);
+			console.log('allRSVPs: '+JSON.stringify(allRSVPs));
+	  	}).on('error', function(err){
+	    	throw err;
+	  	}).on('end', function(){
+	    	console.log('stream end');
+			var locationName = req.url.substring(req.url.indexOf('=')+1,req.url.length);
+			var foursquareExploreURL = 'https://api.foursquare.com/v2/venues/explore?client_id='+process.env.FOURSQUARE_KEY+'&client_secret='+process.env.FOURSQUARE_SECRET+'&v=20130815&query=nightclub&near='+locationName;
+			console.log('foursquareExploreURL: '+foursquareExploreURL);
+			var foursquareAPIrequest = https.get(foursquareExploreURL, (response) => {
+				response.setEncoding('utf-8');
+				var body = "";
+			  	response.on('data', (chunk) => {body += chunk;});
+			  	response.on('end', () => {
+					var json = JSON.parse(body);
+					if (json.response.groups){
+						var items = json.response.groups[0].items;
+						var venueTemplate = null;
+						fs.readFile(path + "/app/models/venue.html", "utf-8", function(err,data){
+							if (err) throw err;
+						  	venueTemplate = data;
+						  	var venueId, venueName, venueAddress, venueLink, venueImgLink, venueTip;
+						  	jsdom.env({
+								html: "",
+								src: [jquerySource],
+								done: function (err, window) {
+									if (err) throw err;
+									var $ = window.$;
+									console.log("index page DOM successfully retrieved");
+									console.log('items.length: '+items.length);
+									var userVenues;
+									if (isLoggedInBool(req, res)) {
+										Usrs.findOne({ 'github.id': req.user.github.id }, function(err, docs) {
+										    if (err) throw err;
+										    userVenues = docs.rsvp.venueIDs;
+											console.log('user RSVPs: '+JSON.stringify(userVenues));
+											for (var i=0;i<items.length;i++){
+												$('body').append(venueTemplate);
+												$('.media').last().addClass('item-'+i);
+												venueId = items[i].venue.id;
+												var rsvpCounter = 0;
+												for (var z=0;z<allRSVPs.length;z++) if (allRSVPs[z] == venueId) rsvpCounter++;
+								        		venueName = items[i].venue.name;
+								        		venueAddress = items[i].venue.location.formattedAddress;
+								        		if (items[i].tips){
+									        		venueLink = items[i].tips[0].canonicalUrl;
+									        		venueImgLink = items[i].tips[0].photourl;
+									        		venueTip = items[i].tips[0].text;
+								        		}else{
+								        			venueLink = "N/A";
+									        		venueImgLink = "N/A";
+									        		venueTip = "N/A";
+								        		}
+								        		$('.item-'+i).find('#venue-image').attr('src',venueImgLink);
+								        		$('.item-'+i).find('#link-venue-image').attr('href',venueLink);
+								        		$('.item-'+i).find('#link-venue-heading').attr('href',venueLink);
+												$('.item-'+i).find('#link-venue-heading').html(venueName);
+												$('.item-'+i).find('#attendees-count').html(rsvpCounter);
+												$('.item-'+i).find('.button-rsvp').attr('id',i);
+												$('.item-'+i).find('.button-rsvp').attr('href','/rsvppost?location='+locationName+'&venueId='+venueId);
+												if (userVenues.indexOf(venueId) !== -1) {
+													$('.item-'+i).find('.button-rsvp').addClass('hidden');
+													$('.item-'+i).find('.button-rsvp-undo').removeClass('hidden');
+													//$('.item-'+i).find('.button-rsvp-undo').attr('id',venueId);
+													$('.item-'+i).find('.button-rsvp-undo').attr('href','/rsvpdelete?location='+locationName+'&venueId='+venueId);
+												}
+												$('.item-'+i).find('#venue-tip').html('Address: '+venueAddress+'<br/>Tip: '+venueTip);
+											}
+											console.log("index page DOM manipulations complete");
+											var newHtml = serializeDocument(window.document);
+											res.send(newHtml);
+											window.close();
+										});
+									}else{
 										for (var i=0;i<items.length;i++){
 											$('body').append(venueTemplate);
 											$('.media').last().addClass('item-'+i);
 											venueId = items[i].venue.id;
+											var rsvpCounter = 0;
+											for (var z=0;z<allRSVPs.length;z++) if (allRSVPs[z] == venueId) rsvpCounter++;
 							        		venueName = items[i].venue.name;
 							        		venueAddress = items[i].venue.location.formattedAddress;
-							        		venueLink = items[i].tips[0].canonicalUrl;
-							        		venueImgLink = items[i].tips[0].photourl;
-							        		venueTip = items[i].tips[0].text;
+							        		if (items[i].tips){
+								        		venueLink = items[i].tips[0].canonicalUrl;
+								        		venueImgLink = items[i].tips[0].photourl;
+								        		venueTip = items[i].tips[0].text;
+							        		}else{
+							        			venueLink = "N/A";
+								        		venueImgLink = "N/A";
+								        		venueTip = "N/A";
+							        		}
 							        		$('.item-'+i).find('#venue-image').attr('src',venueImgLink);
 							        		$('.item-'+i).find('#link-venue-image').attr('href',venueLink);
 							        		$('.item-'+i).find('#link-venue-heading').attr('href',venueLink);
 											$('.item-'+i).find('#link-venue-heading').html(venueName);
+											$('.item-'+i).find('#attendees-count').html(rsvpCounter);
 											$('.item-'+i).find('.button-rsvp').attr('id',i);
 											$('.item-'+i).find('.button-rsvp').attr('href','/rsvppost?location='+locationName+'&venueId='+venueId);
-											if (userVenues.indexOf(venueId) !== -1) {
-												$('.item-'+i).find('.button-rsvp').addClass('hidden');
-												$('.item-'+i).find('.button-rsvp-undo').removeClass('hidden');
-												$('.item-'+i).find('.button-rsvp-undo').attr('href','/rsvpdelete?location='+locationName+'&venueId'+venueId);
-											}
-											$('.item-'+i).find('#venue-tip').html('Address: '+venueAddress+'<br/>Tip: '+venueTip);
+											$('.item-'+i).find('#venue-tip').last().html('Address: '+venueAddress+'<br/>Tip: '+venueTip);
 										}
 										console.log("index page DOM manipulations complete");
 										var newHtml = serializeDocument(window.document);
 										res.send(newHtml);
 										window.close();
-									});
-								}else{
-									for (var i=0;i<items.length;i++){
-										$('body').append(venueTemplate);
-										$('.media').last().addClass('item-'+i);
-										venueId = items[i].venue.id;
-						        		venueName = items[i].venue.name;
-						        		venueAddress = items[i].venue.location.formattedAddress;
-						        		venueLink = items[i].tips[0].canonicalUrl;
-						        		venueImgLink = items[i].tips[0].photourl;
-						        		venueTip = items[i].tips[0].text;
-						        		$('.item-'+i).find('#venue-image').attr('src',venueImgLink);
-						        		$('.item-'+i).find('#link-venue-image').attr('href',venueLink);
-						        		$('.item-'+i).find('#link-venue-heading').attr('href',venueLink);
-										$('.item-'+i).find('#link-venue-heading').html(venueName);
-										$('.item-'+i).find('.button-rsvp').attr('id',i);
-										$('.item-'+i).find('.button-rsvp').attr('href','/rsvppost?location='+locationName+'&venueId='+venueId);
-										$('.item-'+i).find('#venue-tip').last().html('Address: '+venueAddress+'<br/>Tip: '+venueTip);
 									}
-									console.log("index page DOM manipulations complete");
-									var newHtml = serializeDocument(window.document);
-									res.send(newHtml);
-									window.close();
 								}
-							}
+							});
 						});
-					});
-				}else{
-					res.send(json.meta.errorType+": "+json.meta.errorDetail);
-				}
-		  	});
-		}).on('error', (e) => {
-      		console.log(`Got error: ${e.message}`);
+					}else{
+						res.send(json.meta.errorType+": "+json.meta.errorDetail);
+					}
+			  	});
+			}).on('error', (e) => {
+	      		console.log(`Got error: ${e.message}`);
+			});
+			foursquareAPIrequest.end();
 		});
-		foursquareAPIrequest.end();
 	});
 };

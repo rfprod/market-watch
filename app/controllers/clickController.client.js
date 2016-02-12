@@ -10,8 +10,6 @@
    var apiUrlGetRemote = appUrl + '/api/clicks/venues';
    var apiUrlUndoRSVP = appUrl + '/rsvpdelete';
    function updateVenues (data) {
-      //var clicksObject = JSON.parse(data);
-      //var str = clicksObject.explore;
       venuesList.innerHTML = data;
    }
    if (exploreButton){
@@ -26,9 +24,10 @@
          undoRSVP[i].addEventListener('click', function(){
             var venueId = $(this).attr('id');
             console.log(venueId);
-            ajaxFunctions.ajaxRequest('GET', apiUrlUndoRSVP+'?venueId='+venueId, function(res){});
+            ajaxFunctions.ajaxRequest('GET', apiUrlUndoRSVP+'?venueId='+venueId, function(res){
+               window.location = '/profile';
+            });
          });
       }
    }
-   
 })();
