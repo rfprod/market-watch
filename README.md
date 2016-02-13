@@ -1,6 +1,6 @@
-# Nightlife Coordinator built on Clementine.js FCC Boilerplate
+# Market Watch application built on Clementine.js FCC Boilerplate
 
-[Nightlife Coordinator deployed on c9.io](https://nightlife-coordinator-rfprod.c9users.io/)
+[Market Watch application deployed on c9.io](https://market-watch-rfprod.c9users.io/)
 
 ## Overview
 
