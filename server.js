@@ -29,7 +29,7 @@ app.use(passport.session());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 	
-routes(app,passport,jsdom,fs, expressWs);
+routes(app,passport,jsdom,fs);
 
 var port = process.env.PORT || 8080;
 app.listen(port,  function () {

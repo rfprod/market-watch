@@ -5,11 +5,12 @@ var ClickHandler = require(path + '/app/controllers/clickHandler.server.js');
 var clickHandler = new ClickHandler();
 
 var Usrs = require('../models/users.js');
+var Stocks = require('../models/stocks.js');
 
 var https = require("https");
 var http = require("http");
 
-module.exports = function (app, passport, jsdom, fs, wss) {
+module.exports = function (app, passport, jsdom, fs) {
 	
 	var jquerySource = fs.readFileSync(path + "/public/js/jquery.min.js", "utf-8");
 	var serializeDocument = jsdom.serializeDocument;
@@ -64,35 +65,46 @@ module.exports = function (app, passport, jsdom, fs, wss) {
 					if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
 					else $('.navbar-right').html(htmlNavNotAuthed);
 					$('.instructions').append('Some user instructions will be here.');
-					var userVenues = "";
-					if (isLoggedInBool(req, res)) {
-						Usrs.findOne({ 'github.id': req.user.github.id }, function(err, docs) {
-						    if (err) throw err;
-						    userVenues = docs.rsvp.venueIDs;
-							console.log('user RSVPs: '+JSON.stringify(userVenues));
-							/*
-							* here may be retrieval of user preferred location, which may be saved as part of user profile
-							* followed by automated location explore
-							*/
-							console.log("index page DOM manipulations complete");
-							var newHtml = serializeDocument(window.document);
-							res.send(newHtml);
-							window.close();
-						});
-					}else{
+					var stocks = "";
+					Stocks.find({}, function(err, docs) {
+					    if (err) throw err;
+					    if (docs.length == 0) {
+				        	console.log('stocks do not exist: '+JSON.stringify(docs));
+				        }else{
+				        	stocks = docs.publicStocks.codes;
+				        	console.log('stocks exist: '+JSON.stringify(stocks));
+				        }
+						
+						/*
+						* here may be retrieval of user preferred location, which may be saved as part of user profile
+						* followed by automated location explore
+						*/
 						console.log("index page DOM manipulations complete");
 						var newHtml = serializeDocument(window.document);
 						res.send(newHtml);
 						window.close();
-					}
+					});
 				}
 			});
 		});
 	}
 
-	app.ws('/echo', function(ws, req) {
+	app.ws('/addstock', function(ws, req) {
 	  ws.on('message', function(msg) {
-	    ws.send(msg);
+	  	msg = msg.toUpperCase();
+	  	console.log('stock code: '+msg);
+	  	Stocks.find({}, function(err, docs) {
+		    if (err) throw err;
+		    var result = null;
+	        if (docs.length == 0) {
+	        	console.log('stocks do not exist: '+JSON.stringify(docs));
+	        	result = 'stocks do not exist: '+JSON.stringify(docs);
+	        }else{
+	        	console.log('stocks exist: '+JSON.stringify(docs));
+	        	result = 'stocks exist: '+JSON.stringify(docs);
+	        }
+	        ws.send(result);
+		});
 	  });
 	});
 
