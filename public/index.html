@@ -34,16 +34,16 @@
 				<div class="srch row">
 					<form role="form" id="explore-location" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" method="GET" accept-charset="UTF-8">
 						<div class="input-group">
-							<input class="form-control" name="loc" id="location" placeholder="Type desired location name here..." type="text">
+							<input class="form-control" name="loc" id="location" placeholder="Type stock code here..." type="text">
 							<span class="input-group-btn">
-								<button id="submit-btn" onclick="return false;" class="btn btn-default btn-info button-explore" type="submit">Nightclubs</button>
+								<button id="submit-btn" onclick="return false;" class="btn btn-default btn-info button-explore" type="submit">Add Stock</button>
 							</span>
 						</div>
 					</form>
 				</div>
 				<div class="output row">
-					<div class="well venues">
-					</div>
+					<div class="well instructions"></div>
+					<canvas id="stock-data" class="col-xs-12 col-sm-8 col-md-8 col-lg-8"></canvas>
 				</div>
 		      </div>
 		    </div>
@@ -73,6 +73,22 @@
 					}
 				}else console.log('local storage not available');
 			});
+		    
+			var conn = new WebSocket("wss://market-watch-rfprod.c9users.io/echo");
+			conn.onopen = function () {
+				console.log("Connection opened");
+				conn.send("hello world");
+			}
+			conn.onclose = function () {
+				console.log("Connection closed");
+			}
+			conn.onmessage = function (evt) {
+				console.info("Received "+JSON.stringify(evt.data));
+				conn.close();
+			}
+			conn.onerror = function (error) {
+				console.error("Error:"+JSON.stringify(error));
+			}
 		</script>
 	</body>
 </html>

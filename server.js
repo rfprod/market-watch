@@ -9,6 +9,7 @@ var bodyParser = require('body-parser');
 var jsdom = require("jsdom");
 var fs = require('fs');
 var app = express();
+var expressWs = require('express-ws')(app); //app = express app
 
 require('dotenv').load();
 require('./app/config/passport')(passport);
@@ -28,7 +29,7 @@ app.use(passport.session());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 	
-routes(app,passport,jsdom,fs);
+routes(app,passport,jsdom,fs, expressWs);
 
 var port = process.env.PORT || 8080;
 app.listen(port,  function () {

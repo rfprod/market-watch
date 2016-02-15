@@ -7,8 +7,9 @@ var clickHandler = new ClickHandler();
 var Usrs = require('../models/users.js');
 
 var https = require("https");
+var http = require("http");
 
-module.exports = function (app, passport, jsdom, fs) {
+module.exports = function (app, passport, jsdom, fs, wss) {
 	
 	var jquerySource = fs.readFileSync(path + "/public/js/jquery.min.js", "utf-8");
 	var serializeDocument = jsdom.serializeDocument;
@@ -29,57 +30,79 @@ module.exports = function (app, passport, jsdom, fs) {
 		else return false;
 	}
 
+	function getStockData(stock, template,req,res){
+		var markitondemandURLwithParam = "http://dev.markitondemand.com/MODApis/Api/v2/InteractiveChart/json?parameters={%22Normalized%22%3Afalse%2C%22NumberOfDays%22%3A365%2C%22DataPeriod%22%3A%22Day%22%2C%22Elements%22%3A[{%22Symbol%22%3A%22"+stock+"%22%2C%22Type%22%3A%22price%22%2C%22Params%22%3A[%22c%22]}]}";
+		http.get(markitondemandURLwithParam, (response) => {
+			response.setEncoding('utf-8');
+			var body = "";
+		  	response.on('data', (chunk) => {body += chunk;});
+		  	response.on('end', () => {
+				var json = JSON.parse(body);
+				callbackJSDOM(json,template,req,res);
+		  	});
+		}).on('error', (e) => {
+		  	console.log(`Got error: ${e.message}`);
+		}).on('close', () => {
+			console.log('connection closed');
+		});
+	}
+	function callbackJSDOM(data,template,req,res){
+		console.log('template: '+template);
+		console.log('callback: '+JSON.stringify(data));
+		var htmlNavAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-stats'></span> Stocks</a></li><li class='nav-pills'><a href='/profile'><span class='glyphicon glyphicon-user'></span> My Profile</a></li><li class='nav-pills'><a href='/logout'><span class='glyphicon glyphicon-remove'></span> Logout</a></li>";
+		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-stats'></span> Stocks</a></li><li class='nav-pills'><a id='login-href' href='/login'><span class='glyphicon glyphicon-user'></span> Login with Github</a></li>";
+		fs.readFile(path + "/public/"+template, "utf-8", function (err,data) {
+			if (err) throw err;
+		  	var htmlSourceIndex = data;
+		  	jsdom.env({
+				html: htmlSourceIndex,
+				src: [jquerySource],
+				done: function (err, window) {
+					if (err) throw err;
+					var $ = window.$;
+					console.log("index page DOM successfully retrieved");
+					if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
+					else $('.navbar-right').html(htmlNavNotAuthed);
+					$('.instructions').append('Some user instructions will be here.');
+					var userVenues = "";
+					if (isLoggedInBool(req, res)) {
+						Usrs.findOne({ 'github.id': req.user.github.id }, function(err, docs) {
+						    if (err) throw err;
+						    userVenues = docs.rsvp.venueIDs;
+							console.log('user RSVPs: '+JSON.stringify(userVenues));
+							/*
+							* here may be retrieval of user preferred location, which may be saved as part of user profile
+							* followed by automated location explore
+							*/
+							console.log("index page DOM manipulations complete");
+							var newHtml = serializeDocument(window.document);
+							res.send(newHtml);
+							window.close();
+						});
+					}else{
+						console.log("index page DOM manipulations complete");
+						var newHtml = serializeDocument(window.document);
+						res.send(newHtml);
+						window.close();
+					}
+				}
+			});
+		});
+	}
+
+	app.ws('/echo', function(ws, req) {
+	  ws.on('message', function(msg) {
+	    ws.send(msg);
+	  });
+	});
+
 	app.route('/').get(function (req, res) {
 		Usrs.find({}, function(err, docs) {
 		    if (err) throw err;
 	        if (docs.length == 0) console.log('users do not exist: '+JSON.stringify(docs));
 	        else console.log('users exist: '+JSON.stringify(docs));
 		});
-		var htmlNavAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-stats'></span> Stocks</a></li><li class='nav-pills'><a href='/profile'><span class='glyphicon glyphicon-user'></span> My Profile</a></li><li class='nav-pills'><a href='/logout'><span class='glyphicon glyphicon-remove'></span> Logout</a></li>";
-		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-stats'></span> Stocks</a></li><li class='nav-pills'><a id='login-href' href='/login'><span class='glyphicon glyphicon-user'></span> Login with Github</a></li>";
-		var htmlSourceIndex = null;
-		var venueTemplate = null;
-		fs.readFile(path + "/app/models/venue.html","utf-8", function(err,data){
-			if (err) throw err;
-			venueTemplate = data;
-			fs.readFile(path + "/public/index.html", "utf-8", function (err,data) {
-				if (err) throw err;
-			  	htmlSourceIndex = data;
-			  	jsdom.env({
-					html: htmlSourceIndex,
-					src: [jquerySource],
-					done: function (err, window) {
-						if (err) throw err;
-						var $ = window.$;
-						console.log("index page DOM successfully retrieved");
-						if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
-						else $('.navbar-right').html(htmlNavNotAuthed);
-						$('.venues').append('Input desired location in the form field above and hit <strong>Nightclubs</strong> button to the right of the input field.');
-						var userVenues = "";
-						if (isLoggedInBool(req, res)) {
-							Usrs.findOne({ 'github.id': req.user.github.id }, function(err, docs) {
-							    if (err) throw err;
-							    userVenues = docs.rsvp.venueIDs;
-								console.log('user RSVPs: '+JSON.stringify(userVenues));
-								/*
-								* here may be retrieval of user preferred location, which may be saved as part of user profile
-								* followed by automated location explore
-								*/
-								console.log("index page DOM manipulations complete");
-								var newHtml = serializeDocument(window.document);
-								res.send(newHtml);
-								window.close();
-							});
-						}else{
-							console.log("index page DOM manipulations complete");
-							var newHtml = serializeDocument(window.document);
-							res.send(newHtml);
-							window.close();
-						}
-					}
-				});
-			});
-		});
+		getStockData("AAPL", "index.html", req, res);
 	});
 	app.route('/login').get(function (req, res) {
 		res.sendFile(path + '/public/login.html');
