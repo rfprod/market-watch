@@ -50,6 +50,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	function callbackJSDOM(data,template,req,res){
 		console.log('template: '+template);
 		console.log('callback: '+JSON.stringify(data));
+		var chartData = JSON.stringify(data);
 		var htmlNavAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-stats'></span> Stocks</a></li><li class='nav-pills'><a href='/profile'><span class='glyphicon glyphicon-user'></span> My Profile</a></li><li class='nav-pills'><a href='/logout'><span class='glyphicon glyphicon-remove'></span> Logout</a></li>";
 		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-stats'></span> Stocks</a></li><li class='nav-pills'><a id='login-href' href='/login'><span class='glyphicon glyphicon-user'></span> Login with Github</a></li>";
 		fs.readFile(path + "/public/"+template, "utf-8", function (err,data) {
@@ -65,6 +66,7 @@ module.exports = function (app, passport, jsdom, fs) {
 					if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
 					else $('.navbar-right').html(htmlNavNotAuthed);
 					$('.instructions').append('Some user instructions will be here.');
+					$('.chart-data').append(chartData);
 					var stocks = "";
 					Stocks.find({}, function(err, docs) {
 					    if (err) throw err;

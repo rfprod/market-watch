@@ -45,6 +45,7 @@
 				</div>
 				<div class="output row">
 					<div class="well instructions"></div>
+					<div class="chart-data hidden"></div>
 					<div id="chart" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="border:1px dashed grey;min-height:40vh;"></div>
 				</div>
 		      </div>
@@ -58,73 +59,71 @@
 		<script type="text/javascript" src="controllers/clickController.client.js"></script>
 		<!--<script type="text/javascript" src="controllers/userController.client.js"></script>-->
 		<script>
-			/*
-			$(document).ready(function(){
-				if(typeof(Storage) !== "undefined") {
-					console.log('local storage available, getting params');
-					var location = localStorage.getItem('location');
-					var venueId = localStorage.getItem('venueId');
-					console.log('localStorage.length: '+localStorage.length+' | contents: '+JSON.stringify(localStorage));
-					console.log('localStorage.location retrieved: '+localStorage.location+" | "+"localStorage.venueId retrieved: "+localStorage.venueId);
-					if (typeof localStorage.location !== "undefined"){
-						console.log('setting location');
-						$('#location').val(localStorage.location);
-						console.log('triggering click');
-						$('button#submit-btn')[0].click();
-						localStorage.clear();
-						console.log('Cleared localStorage.location: '+localStorage.location+" | "+"localStorage.venueId: "+localStorage.venueId);
-					}
-				}else console.log('local storage not available');
-			});*/
-			    $(function () {
-				    var seriesOptions = [],
-				        seriesCounter = 0,
-				        names = ['MSFT', 'AAPL', 'GOOG'];
-				    function createChart() {
-				        $('#chart').highcharts('StockChart', {
-				            rangeSelector: {
-				                selected: 4
-				            },
-				            yAxis: {
-				                labels: {
-				                    formatter: function () {
-				                        return (this.value > 0 ? ' + ' : '') + this.value + '%';
-				                    }
-				                },
-				                plotLines: [{
-				                    value: 0,
-				                    width: 2,
-				                    color: 'silver'
-				                }]
-				            },
-				            plotOptions: {
-				                series: {
-				                    compare: 'percent'
-				                }
-				            },
-				            tooltip: {
-				                pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
-				                valueDecimals: 2
-				            },
-				            series: seriesOptions
-				        });
-				    }
-				    $.each(names, function (i, name) {
-				        $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=' + name.toLowerCase() + '-c.json&callback=?',    function (data) {
-				        //$.getJSON('//dev.markitondemand.com/MODApis/Api/v2/InteractiveChart/json?parameters={%22Normalized%22%3Afalse%2C%22NumberOfDays%22%3A365%2C%22DataPeriod%22%3A%22Day%22%2C%22Elements%22%3A[{%22Symbol%22%3A%22'+name+'%22%2C%22Type%22%3A%22price%22%2C%22Params%22%3A[%22c%22]}]}&callback=?', function(data){
-				            seriesOptions[i] = {
-				                name: name,
-				                data: data
-				            };
-				            // As we're loading the data asynchronously, we don't know what order it will arrive. So
-				            // we keep a counter and create the chart when all the data is loaded.
-				            seriesCounter += 1;
-				            if (seriesCounter === names.length) {
-				                createChart();
-				            }
-				        });
-				    });
-				});
+		    $(function () {
+		    	var chartData = JSON.parse($('.chart-data').html());
+		    	var stockName = chartData.Elements[0].Symbol;
+		    	var chartDates = chartData.Dates;
+		    	var chartValues = chartData.Elements[0].DataSeries.close.values;
+		    	var chartDataFiltered = [];
+		    	chartDates.forEach(function(curVal, index, array){
+		    		var unit = [new Date(curVal).getTime(),chartValues[index]];
+		    		chartDataFiltered.push(unit);
+		    	});
+		    	console.log('chartDataFiltered: '+JSON.stringify(chartDataFiltered));
+			    var seriesOptions = [],
+			        seriesCounter = 0,
+			        names = ['MSFT', 'AAPL', 'GOOG'];
+			    function createChart() {
+			        $('#chart').highcharts('StockChart', {
+			            rangeSelector: {
+			                selected: 4
+			            },
+			            yAxis: {
+			                labels: {
+			                    formatter: function () {
+			                        return (this.value > 0 ? ' + ' : '') + this.value + '%';
+			                    }
+			                },
+			                plotLines: [{
+			                    value: 0,
+			                    width: 2,
+			                    color: 'silver'
+			                }]
+			            },
+			            plotOptions: {
+			                series: {
+			                    compare: 'percent'
+			                }
+			            },
+			            tooltip: {
+			                pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.change}%)<br/>',
+			                valueDecimals: 2
+			            },
+			            series: seriesOptions
+			        });
+			    }
+			    seriesOptions[0] = {
+	                name: stockName,
+	                data: chartDataFiltered
+	            };
+	            createChart();
+			    /*
+			    $.each(names, function (i, name) {
+			        $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=' + name.toLowerCase() + '-c.json&callback=?',    function (data) {
+			            seriesOptions[i] = {
+			                name: name,
+			                data: data
+			            };
+			            // As we're loading the data asynchronously, we don't know what order it will arrive. So
+			            // we keep a counter and create the chart when all the data is loaded.
+			            seriesCounter += 1;
+			            if (seriesCounter === names.length) {
+			                createChart();
+			            }
+			        });
+			    });
+			    */
+			});
 		</script>
 	</body>
 </html>
