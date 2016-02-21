@@ -4,6 +4,8 @@
 		<title>Market Watch</title>
 		<script src="/public/js/jquery.min.js"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script> <!-- this is needed for highcharts loading, else it does not work -->
+		<script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js"></script>
+		<link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/themes/smoothness/jquery-ui.css" rel="stylesheet">
 	    <link href="/public/css/bootstrap.min.css" rel="stylesheet">
 	    <script src="/public/js/bootstrap.min.js"></script>
 	    <script src="/public/js/highstock.js"></script>
@@ -36,7 +38,7 @@
 				<div class="srch row">
 					<form role="form" id="explore-location" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" method="GET" accept-charset="UTF-8">
 						<div class="input-group">
-							<input class="form-control" name="loc" id="location" placeholder="Type stock code here..." type="text">
+							<input class="form-control" name="lookup" id="lookup" placeholder="Type stock code here..." type="text">
 							<span class="input-group-btn">
 								<button id="submit-btn" onclick="return false;" class="btn btn-default btn-info button-add-stock" type="submit">Add Stock</button>
 							</span>
@@ -61,6 +63,7 @@
 		<script>
 		    $(function () {
 		    	var chartData = JSON.parse($('.chart-data').html());
+		    	console.log(JSON.stringify(chartData));
 		    	var stockName = chartData.Elements[0].Symbol;
 		    	var chartDates = chartData.Dates;
 		    	var chartValues = chartData.Elements[0].DataSeries.close.values;
@@ -107,22 +110,31 @@
 	                data: chartDataFiltered
 	            };
 	            createChart();
-			    /*
-			    $.each(names, function (i, name) {
-			        $.getJSON('https://www.highcharts.com/samples/data/jsonp.php?filename=' + name.toLowerCase() + '-c.json&callback=?',    function (data) {
-			            seriesOptions[i] = {
-			                name: name,
-			                data: data
-			            };
-			            // As we're loading the data asynchronously, we don't know what order it will arrive. So
-			            // we keep a counter and create the chart when all the data is loaded.
-			            seriesCounter += 1;
-			            if (seriesCounter === names.length) {
-			                createChart();
-			            }
-			        });
-			    });
-			    */
+	            
+            	(function suggestSymbol(){
+					$("#lookup").autocomplete({
+				    	source: function(request,response){
+				      		console.log(request.term);
+				      		var requestURL = "http://dev.markitondemand.com/MODApis/Api/v2/Lookup/jsonp?input="+request.term+"&callback=?";
+				      		console.log(requestURL);
+				      		var suggestions = [];
+				      		$.getJSON(requestURL,function(json){
+				    			console.log("json length: "+json.length);
+				      		}).success(function(data){
+				      			data.forEach(function(element, index, array){
+				      				suggestions.push(element.Symbol+" - "+element.Name+" ["+element.Exchange+"]");
+				      			});
+				        		console.log(JSON.stringify(data));
+				        		console.log(JSON.stringify(suggestions));
+				        		response(suggestions);
+				      		}).error(function(error){
+				      			console.log(JSON.stringify(error));
+				        		response(error);
+				      		});
+				    	}
+				  	});
+				})();
+				
 			});
 		</script>
 	</body>
