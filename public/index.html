@@ -104,10 +104,12 @@
 			            series: seriesOptions
 			        });
 			    }
-			    seriesOptions[0] = {
-	                name: stockName[0],
-	                data: chartDataFiltered[0]
-	            };
+			    chartDataFiltered.forEach(function(element,index,array){
+			    	seriesOptions[index] = {
+	                     name: stockName[index],
+	                     data: chartDataFiltered[index]
+	                };
+			    });
 	            createChart();
 	            
 				$("#lookup").autocomplete({

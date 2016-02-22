@@ -94,7 +94,6 @@ module.exports = function (app, passport, jsdom, fs) {
 				        	console.log('stocks exist: '+JSON.stringify(docs));
 				        	var dbChartData = [];
 				        	docs.forEach(function(element, index, array){
-				        		//console.log(element.data);
 				        		dbChartData.push(element.data[0]);
 				        	});
 				        	$('.chart-data').append(JSON.stringify(dbChartData));
@@ -121,7 +120,43 @@ module.exports = function (app, passport, jsdom, fs) {
     		chartDataFiltered.push(unit);
     	});
     	var chartDataFinalObject = [{"stock":stockName,"data":chartDataFiltered}];
-    	return chartDataFinalObject;
+    	
+    	Stocks.find({}, function(err, docs) {
+		    if (err) throw err;
+		    var newStock = null;
+		    if (docs.length == 0) {
+	        	console.log('stocks do not exist: '+JSON.stringify(docs));
+	        	console.log('inserting stock data');
+	        	newStock = new Stocks();
+				newStock._id = stockName;
+				newStock.data = chartDataFinalObject;
+				newStock.save(function (err) {
+					if (err) throw err;
+					console.log('new data saved');
+				});
+				console.log('newStock: '+JSON.stringify(newStock));
+	        }else{
+	        	console.log('stocks exist: '+JSON.stringify(docs));
+	        	console.log('checking if stock already exists in DB');
+	        	var dbContainsStock = false;
+	        	docs.forEach(function(element, index, array){
+	        		if (element.data[0].stock === stockName) dbContainsStock = true;
+	        	});
+	        	console.log('dbContainsStock: '+dbContainsStock);
+	        	if (!dbContainsStock){
+	        		console.log('inserting stock data');
+	        		newStock = new Stocks();
+					newStock._id = stockName;
+					newStock.data = chartDataFinalObject;
+					newStock.save(function (err) {
+						if (err) throw err;
+						console.log('new data saved');
+					});
+					console.log('newStock: '+JSON.stringify(newStock));
+	        	}
+	        }
+		});
+    	
 		//document.getElementByClassName('chart-data').append(JSON.stringify(chartDataFinalObject));
 	}
 
@@ -136,13 +171,14 @@ module.exports = function (app, passport, jsdom, fs) {
 	  	Stocks.find({}, function(err, docs) {
 		    if (err) throw err;
 		    var result = null;
-	        if (docs.length == 0) {
-	        	console.log('stocks do not exist: '+JSON.stringify(docs));
-	        	result = 'stocks do not exist: '+JSON.stringify(docs);
-	        }else{
-	        	console.log('stocks exist: '+JSON.stringify(docs));
-	        	result = 'stocks exist: '+JSON.stringify(docs);
-	        }
+        	console.log('stocks data: '+JSON.stringify(docs));
+        	
+        	var dbChartData = [];
+        	docs.forEach(function(element, index, array){
+        		dbChartData.push(element.data[0]);
+        	});
+        	
+        	result = 'stocks data: '+JSON.stringify(docs);
 	        ws.send(result);
 		});
 	  });
