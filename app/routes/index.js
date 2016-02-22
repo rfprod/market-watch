@@ -156,8 +156,6 @@ module.exports = function (app, passport, jsdom, fs) {
 	        	}
 	        }
 		});
-    	
-		//document.getElementByClassName('chart-data').append(JSON.stringify(chartDataFinalObject));
 	}
 
 	app.ws('/addstock', function(ws, req) {
@@ -177,7 +175,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	        	});
 	        	
 	        	result = 'stocks data: '+JSON.stringify(docs);
-		        ws.send(result);
+		        ws.send(JSON.stringify(dbChartData));
 			});
 	  	});
 	});

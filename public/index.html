@@ -60,13 +60,17 @@
 		</div>
 		<script type="text/javascript" src="common/ajax-functions.js"></script>
 		<script type="text/javascript" src="controllers/clickController.client.js"></script>
-		<!--<script type="text/javascript" src="controllers/userController.client.js"></script>-->
 		<script>
-		    $(function () {
+		    $(document).on('ready',function(){
+		    	updateChart();
+		    });
+			
+			function updateChart() {
 		    	var chartData = JSON.parse($('.chart-data').html());
 		    	console.log(JSON.stringify(chartData));
 		    	var stockName = [];
 		    	var chartDataFiltered = [];
+		    	$('#legend').html("");
 		    	chartData.forEach(function(element, index, array){
 		    		stockName.push(element.stock);
 			    	chartDataFiltered.push(element.data);
@@ -75,9 +79,7 @@
 		    	});
 
 		    	console.log('chartDataFiltered: '+JSON.stringify(chartDataFiltered));
-			    var seriesOptions = []/*,
-			        seriesCounter = 0,
-			        names = ['MSFT', 'AAPL', 'GOOG']*/;
+			    var seriesOptions = [];
 			    function createChart() {
 			        $('#chart').highcharts('StockChart', {
 			            rangeSelector: {
@@ -137,7 +139,7 @@
 			    	}
 			  	});
 			  	
-			});
+			}
 			
 			function removeData(obj){
 				var stockCode = obj.id;
