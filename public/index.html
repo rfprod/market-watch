@@ -48,7 +48,8 @@
 				<div class="output row">
 					<div class="well instructions"></div>
 					<div class="chart-data hidden"></div>
-					<div id="chart" class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="border:1px dashed grey;min-height:40vh;"></div>
+					<div id="chart" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"></div>
+					<div id="legend" class="col-xs-12 col-sm-12 col-md-12 col-lg-12"></div>
 				</div>
 		      </div>
 		    </div>
@@ -69,12 +70,14 @@
 		    	chartData.forEach(function(element, index, array){
 		    		stockName.push(element.stock);
 			    	chartDataFiltered.push(element.data);
+			    	var legendItem = '<div class="alert alert-info alert-dismissible col-xs-4 col-sm-3 col-md-2 col-lg-2 legend-item" role="alert"><button type="button" class="close" id="'+element.stock+'" data-dismiss="alert" onclick="removeData(this);" aria-label="Close"><span aria-hidden="true">&times;</span></button><span class="stock-code">'+element.stock+'</span></div>';
+			    	$('#legend').append(legendItem);
 		    	});
 
 		    	console.log('chartDataFiltered: '+JSON.stringify(chartDataFiltered));
-			    var seriesOptions = [],
+			    var seriesOptions = []/*,
 			        seriesCounter = 0,
-			        names = ['MSFT', 'AAPL', 'GOOG'];
+			        names = ['MSFT', 'AAPL', 'GOOG']*/;
 			    function createChart() {
 			        $('#chart').highcharts('StockChart', {
 			            rangeSelector: {
@@ -133,7 +136,29 @@
 			      		});
 			    	}
 			  	});
+			  	
 			});
+			
+			function removeData(obj){
+				var stockCode = obj.id;
+				console.log('data removal invoked, object id: '+stockCode);
+				var conn = new WebSocket("wss://market-watch-rfprod.c9users.io/removestock");
+			    conn.onopen = function(){
+				    console.log("Connection opened");
+				    conn.send(stockCode);
+			    }
+			    conn.onmessage = function(evt){
+				    console.info("Received "+JSON.stringify(evt.data));
+				    conn.close();
+			    }
+			    conn.onerror = function(error){
+				    console.error("Error:"+JSON.stringify(error));
+				    conn.close();
+			    }
+			    conn.onclose = function(){
+				    console.log("Connection closed");
+			    }
+			}
 		</script>
 	</body>
 </html>

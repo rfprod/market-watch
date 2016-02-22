@@ -16,19 +16,20 @@
          var stockCode = document.getElementsByTagName('input')[0].value;
          //ajaxFunctions.ajaxRequest('GET', apiUrlGetRemote+'?explore='+urlParam, updateVenues);
          var conn = new WebSocket("wss://market-watch-rfprod.c9users.io/addstock");
-			conn.onopen = function () {
+			conn.onopen = function(){
 				console.log("Connection opened");
 				conn.send(stockCode);
 			}
-			conn.onclose = function () {
-				console.log("Connection closed");
-			}
-			conn.onmessage = function (evt) {
+			conn.onmessage = function(evt){
 				console.info("Received "+JSON.stringify(evt.data));
 				conn.close();
 			}
-			conn.onerror = function (error) {
+			conn.onerror = function(error){
 				console.error("Error:"+JSON.stringify(error));
+				conn.close();
+			}
+			conn.onclose = function(){
+				console.log("Connection closed");
 			}
       });
    }

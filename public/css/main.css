@@ -11,11 +11,11 @@ p {margin-top:0.5vh;}
 .srch {margin-top:2.5vh;}
 .output {margin-top:2.5vh;}
 .output a:hover {text-decoration:none;}
+#chart{border:1px dashed grey;min-height:40vh;}
+#legend{border:1px dashed grey;height:auto!important;}
+.legend-item{margin-top:20px;}
+.stock-code{font-weight:bold;}
 .profile {margin-top:2vh;}
-.btn-toolbar {text-align:center;width:auto;max-width:100%;}
-.media {border:0;border-radius:0.25em;}
-.media:hover {background-color:#ffffe5;/*border:1px dashed;*/border-radius:0.25em;cursor:default;}
-.fl-right{float:right;}
 /****************************/
 /* Clementine default style */
 /********** Fonts ***********/

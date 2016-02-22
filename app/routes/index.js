@@ -66,7 +66,7 @@ module.exports = function (app, passport, jsdom, fs) {
 					console.log("index page DOM successfully retrieved");
 					if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
 					else $('.navbar-right').html(htmlNavNotAuthed);
-					$('.instructions').append('To be able to add stocks you have to allow mixed content in your browser, because dev.markitondemand.com/MODApis/Api/v2/ is availalbe by http protocol only.');
+					$('.instructions').append('To be able to add stocks using suggestions you have to allow mixed content in your browser, because dev.markitondemand.com/MODApis/Api/v2/ is availalbe by http protocol only.');
 					var stockName = chartData.Elements[0].Symbol;
 			    	var chartDates = chartData.Dates;
 			    	var chartValues = chartData.Elements[0].DataSeries.close.values;
@@ -161,27 +161,37 @@ module.exports = function (app, passport, jsdom, fs) {
 	}
 
 	app.ws('/addstock', function(ws, req) {
-	  ws.on('message', function(msg) {
-	  	msg = msg.substring(0,msg.indexOf("-")-1);
-	  	console.log('stock code: '+msg);
-	  	getStockData(msg, "", req);
-	  	
-	  	// CONTINUE FROM HERE - data should be stored in DB
-	  	
-	  	Stocks.find({}, function(err, docs) {
-		    if (err) throw err;
-		    var result = null;
-        	console.log('stocks data: '+JSON.stringify(docs));
-        	
-        	var dbChartData = [];
-        	docs.forEach(function(element, index, array){
-        		dbChartData.push(element.data[0]);
-        	});
-        	
-        	result = 'stocks data: '+JSON.stringify(docs);
-	        ws.send(result);
+		console.log('/addstock');
+	  	ws.on('message', function(msg) {
+	  		msg = msg.substring(0,msg.indexOf("-")-1);
+	  		console.log('stock code: '+msg);
+	  		getStockData(msg, "", req);
+	  		Stocks.find({}, function(err, docs) {
+			    if (err) throw err;
+			    var result = null;
+	        	console.log('stocks data: '+JSON.stringify(docs));
+	        	
+	        	var dbChartData = [];
+	        	docs.forEach(function(element, index, array){
+	        		dbChartData.push(element.data[0]);
+	        	});
+	        	
+	        	result = 'stocks data: '+JSON.stringify(docs);
+		        ws.send(result);
+			});
+	  	});
+	});
+	app.ws('/removestock', function(ws, res){
+		console.log('/removestock');
+		ws.on('message', function(msg){
+			console.log('stock code: '+msg);
+			Stocks.remove({ _id: msg }, function(err,data){
+				if (err) throw err;
+				console.log(data);
+				var result = 'stocks data: '+JSON.stringify(data);
+		        ws.send(result);
+			});
 		});
-	  });
 	});
 
 	app.route('/').get(function (req, res) {
@@ -317,52 +327,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	    var match = url.match(pattern);
 	    return(match ? match[1] : "");
 	}
-	app.route('/rsvppost').get(isLoggedIn, function(req, res){
-		var locationName = getPrm(req.url,'location');
-		console.log('locationName: '+locationName);
-		var venueId = getPrm(req.url,'venueId');
-		console.log('venueId: '+venueId);
-		Usrs.find({ 'github.id': req.user.github.id }, function(err,data){
-			if (err) throw err;
-			var userRSVPvenues = data[0].rsvp.venueIDs;
-			console.log('userRSVPvenues: '+JSON.stringify(userRSVPvenues));
-			if (userRSVPvenues.indexOf(venueId) == -1) {
-				userRSVPvenues.push(venueId);
-				Usrs.update({ 'github.id': req.user.github.id }, {$set:{'rsvp.venueIDs':userRSVPvenues}}, function(err,data){
-			    	if (err) throw err;
-			        console.log('updated user: '+JSON.stringify(data));
-			        req.session.valid = true;
-  					res.redirect('/profile');
-			    });
-			}
-		});
-	});
-	app.route('/rsvpdelete').get(isLoggedIn, function(req, res){
-		console.log('/rsvpdelete');
-		var currentUserId = req.session.passport.user;
-    	var venueId = getPrm(req.url,'venueId');
-		console.log('venueId: '+venueId);
-		Usrs.find({ 'github.id': req.user.github.id }, function(err,data){
-			if (err) throw err;
-			var userRSVPvenues = data[0].rsvp.venueIDs;
-			var idIndex = userRSVPvenues.indexOf(venueId);
-			console.log('userRSVPvenues: '+JSON.stringify(userRSVPvenues));
-			console.log('idIndex: '+idIndex);
-			if (userRSVPvenues.length == 1) userRSVPvenues = [];
-			else if (userRSVPvenues.length > 1) {
-				if (idIndex == userRSVPvenues.length-1) userRSVPvenues.pop();
-				else userRSVPvenues.splice(idIndex, 1);
-			}
-			console.log('updated userRSVPvenues: '+JSON.stringify(userRSVPvenues));
-			Usrs.update({ 'github.id': req.user.github.id }, {$set:{'rsvp.venueIDs':userRSVPvenues}}, function(err,data){
-		    	if (err) throw err;
-		        console.log('updated user: '+JSON.stringify(data));
-		        req.session.valid = true;
-		        
-  				res.redirect('/profile'); // this does not redirect actually
-		    });
-		});
-	});
+	
 	app.route('/api/:id').get(isLoggedIn, function(req, res){
 		res.json(req.user.github);
 	});
