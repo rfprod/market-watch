@@ -39,7 +39,8 @@ module.exports = function (app, passport, jsdom, fs) {
 		  	response.on('data', (chunk) => {body += chunk;});
 		  	response.on('end', () => {
 				var json = JSON.parse(body);
-				callbackJSDOM(json,template,req,res);
+				if (template != "") callbackJSDOM(json,template,req,res);
+				else callbackWS(json,req);
 		  	});
 		}).on('error', (e) => {
 		  	console.log(`Got error: ${e.message}`);
@@ -50,7 +51,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	function callbackJSDOM(data,template,req,res){
 		console.log('template: '+template);
 		console.log('callback: '+JSON.stringify(data));
-		var chartData = JSON.stringify(data);
+		var chartData = data;
 		var htmlNavAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-stats'></span> Stocks</a></li><li class='nav-pills'><a href='/profile'><span class='glyphicon glyphicon-user'></span> My Profile</a></li><li class='nav-pills'><a href='/logout'><span class='glyphicon glyphicon-remove'></span> Logout</a></li>";
 		var htmlNavNotAuthed = "<li class='nav-pills active'><a href='#app'><span class='glyphicon glyphicon-stats'></span> Stocks</a></li><li class='nav-pills'><a id='login-href' href='/login'><span class='glyphicon glyphicon-user'></span> Login with Github</a></li>";
 		fs.readFile(path + "/public/"+template, "utf-8", function (err,data) {
@@ -65,22 +66,39 @@ module.exports = function (app, passport, jsdom, fs) {
 					console.log("index page DOM successfully retrieved");
 					if (isLoggedInBool(req, res)) $('.navbar-right').html(htmlNavAuthed);
 					else $('.navbar-right').html(htmlNavNotAuthed);
-					$('.instructions').append('Some user instructions will be here.');
-					$('.chart-data').append(chartData);
-					var stocks = "";
+					$('.instructions').append('To be able to add stocks you have to allow mixed content in your browser, because dev.markitondemand.com/MODApis/Api/v2/ is availalbe by http protocol only.');
+					var stockName = chartData.Elements[0].Symbol;
+			    	var chartDates = chartData.Dates;
+			    	var chartValues = chartData.Elements[0].DataSeries.close.values;
+			    	var chartDataFiltered = [];
+					chartDates.forEach(function(curVal, index, array){
+			    		var unit = [new Date(curVal).getTime(),chartValues[index]];
+			    		chartDataFiltered.push(unit);
+			    	});
+			    	var chartDataFinalObject = [{"stock":stockName,"data":chartDataFiltered}];
+					//$('.chart-data').append(JSON.stringify(chartDataFinalObject));
 					Stocks.find({}, function(err, docs) {
 					    if (err) throw err;
 					    if (docs.length == 0) {
 				        	console.log('stocks do not exist: '+JSON.stringify(docs));
+				        	console.log('inserting stock data');
+				        	var newStock = new Stocks();
+							newStock._id = stockName;
+							newStock.data = chartDataFinalObject;
+							newStock.save(function (err) {
+								if (err) throw err;
+								console.log('new data saved');
+							});
+							console.log('newStock: '+JSON.stringify(newStock));
 				        }else{
-				        	stocks = docs.publicStocks.codes;
-				        	console.log('stocks exist: '+JSON.stringify(stocks));
+				        	console.log('stocks exist: '+JSON.stringify(docs));
+				        	var dbChartData = [];
+				        	docs.forEach(function(element, index, array){
+				        		//console.log(element.data);
+				        		dbChartData.push(element.data[0]);
+				        	});
+				        	$('.chart-data').append(JSON.stringify(dbChartData));
 				        }
-						
-						/*
-						* here may be retrieval of user preferred location, which may be saved as part of user profile
-						* followed by automated location explore
-						*/
 						console.log("index page DOM manipulations complete");
 						var newHtml = serializeDocument(window.document);
 						res.send(newHtml);
@@ -90,11 +108,31 @@ module.exports = function (app, passport, jsdom, fs) {
 			});
 		});
 	}
+	function callbackWS(data,req){
+		console.log('callback: '+JSON.stringify(data));
+		var chartData = data;
+		
+		var stockName = chartData.Elements[0].Symbol;
+    	var chartDates = chartData.Dates;
+    	var chartValues = chartData.Elements[0].DataSeries.close.values;
+    	var chartDataFiltered = [];
+		chartDates.forEach(function(curVal, index, array){
+    		var unit = [new Date(curVal).getTime(),chartValues[index]];
+    		chartDataFiltered.push(unit);
+    	});
+    	var chartDataFinalObject = [{"stock":stockName,"data":chartDataFiltered}];
+    	return chartDataFinalObject;
+		//document.getElementByClassName('chart-data').append(JSON.stringify(chartDataFinalObject));
+	}
 
 	app.ws('/addstock', function(ws, req) {
 	  ws.on('message', function(msg) {
-	  	msg = msg.toUpperCase();
+	  	msg = msg.substring(0,msg.indexOf("-")-1);
 	  	console.log('stock code: '+msg);
+	  	getStockData(msg, "", req);
+	  	
+	  	// CONTINUE FROM HERE - data should be stored in DB
+	  	
 	  	Stocks.find({}, function(err, docs) {
 		    if (err) throw err;
 		    var result = null;

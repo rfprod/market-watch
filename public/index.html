@@ -64,14 +64,13 @@
 		    $(function () {
 		    	var chartData = JSON.parse($('.chart-data').html());
 		    	console.log(JSON.stringify(chartData));
-		    	var stockName = chartData.Elements[0].Symbol;
-		    	var chartDates = chartData.Dates;
-		    	var chartValues = chartData.Elements[0].DataSeries.close.values;
+		    	var stockName = [];
 		    	var chartDataFiltered = [];
-		    	chartDates.forEach(function(curVal, index, array){
-		    		var unit = [new Date(curVal).getTime(),chartValues[index]];
-		    		chartDataFiltered.push(unit);
+		    	chartData.forEach(function(element, index, array){
+		    		stockName.push(element.stock);
+			    	chartDataFiltered.push(element.data);
 		    	});
+
 		    	console.log('chartDataFiltered: '+JSON.stringify(chartDataFiltered));
 			    var seriesOptions = [],
 			        seriesCounter = 0,
@@ -106,35 +105,32 @@
 			        });
 			    }
 			    seriesOptions[0] = {
-	                name: stockName,
-	                data: chartDataFiltered
+	                name: stockName[0],
+	                data: chartDataFiltered[0]
 	            };
 	            createChart();
 	            
-            	(function suggestSymbol(){
-					$("#lookup").autocomplete({
-				    	source: function(request,response){
-				      		console.log(request.term);
-				      		var requestURL = "http://dev.markitondemand.com/MODApis/Api/v2/Lookup/jsonp?input="+request.term+"&callback=?";
-				      		console.log(requestURL);
-				      		var suggestions = [];
-				      		$.getJSON(requestURL,function(json){
-				    			console.log("json length: "+json.length);
-				      		}).success(function(data){
-				      			data.forEach(function(element, index, array){
-				      				suggestions.push(element.Symbol+" - "+element.Name+" ["+element.Exchange+"]");
-				      			});
-				        		console.log(JSON.stringify(data));
-				        		console.log(JSON.stringify(suggestions));
-				        		response(suggestions);
-				      		}).error(function(error){
-				      			console.log(JSON.stringify(error));
-				        		response(error);
-				      		});
-				    	}
-				  	});
-				})();
-				
+				$("#lookup").autocomplete({
+			    	source: function(request,response){
+			      		console.log(request.term);
+			      		var requestURL = "http://dev.markitondemand.com/MODApis/Api/v2/Lookup/jsonp?input="+request.term+"&callback=?";
+			      		console.log(requestURL);
+			      		var suggestions = [];
+			      		$.getJSON(requestURL,function(json){
+			    			console.log("json length: "+json.length);
+			      		}).success(function(data){
+			      			data.forEach(function(element, index, array){
+			      				suggestions.push(element.Symbol+" - "+element.Name+" ["+element.Exchange+"]");
+			      			});
+			        		console.log(JSON.stringify(data));
+			        		console.log(JSON.stringify(suggestions));
+			        		response(suggestions);
+			      		}).error(function(error){
+			      			console.log(JSON.stringify(error));
+			        		response(error);
+			      		});
+			    	}
+			  	});
 			});
 		</script>
 	</body>
