@@ -31,7 +31,7 @@ module.exports = function (app, passport, jsdom, fs) {
 		else return false;
 	}
 
-	function getStockData(stock, template,req,res){
+	function getStockData(stock, template,req,res,ws){
 		var markitondemandURLwithParam = "http://dev.markitondemand.com/MODApis/Api/v2/InteractiveChart/json?parameters={%22Normalized%22%3Afalse%2C%22NumberOfDays%22%3A365%2C%22DataPeriod%22%3A%22Day%22%2C%22Elements%22%3A[{%22Symbol%22%3A%22"+stock+"%22%2C%22Type%22%3A%22price%22%2C%22Params%22%3A[%22c%22]}]}";
 		http.get(markitondemandURLwithParam, (response) => {
 			response.setEncoding('utf-8');
@@ -40,7 +40,7 @@ module.exports = function (app, passport, jsdom, fs) {
 		  	response.on('end', () => {
 				var json = JSON.parse(body);
 				if (template != "") callbackJSDOM(json,template,req,res);
-				else callbackWS(json,req);
+				else callbackWS(json,req,ws);
 		  	});
 		}).on('error', (e) => {
 		  	console.log(`Got error: ${e.message}`);
@@ -76,7 +76,6 @@ module.exports = function (app, passport, jsdom, fs) {
 			    		chartDataFiltered.push(unit);
 			    	});
 			    	var chartDataFinalObject = [{"stock":stockName,"data":chartDataFiltered}];
-					//$('.chart-data').append(JSON.stringify(chartDataFinalObject));
 					Stocks.find({}, function(err, docs) {
 					    if (err) throw err;
 					    if (docs.length == 0) {
@@ -107,7 +106,7 @@ module.exports = function (app, passport, jsdom, fs) {
 			});
 		});
 	}
-	function callbackWS(data,req){
+	function callbackWS(data,req,ws){
 		console.log('callback: '+JSON.stringify(data));
 		var chartData = data;
 		
@@ -155,6 +154,16 @@ module.exports = function (app, passport, jsdom, fs) {
 					console.log('newStock: '+JSON.stringify(newStock));
 	        	}
 	        }
+	        
+	        Stocks.find({}, function(err, docs) {
+		    	if (err) throw err;
+		        var dbChartData = [];
+	        	docs.forEach(function(element, index, array){
+	        		dbChartData.push(element.data[0]);
+	        	});
+	        	
+		        ws.send(JSON.stringify(dbChartData));
+	        });
 		});
 	}
 
@@ -163,20 +172,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	  	ws.on('message', function(msg) {
 	  		msg = msg.substring(0,msg.indexOf("-")-1);
 	  		console.log('stock code: '+msg);
-	  		getStockData(msg, "", req);
-	  		Stocks.find({}, function(err, docs) {
-			    if (err) throw err;
-			    var result = null;
-	        	console.log('stocks data: '+JSON.stringify(docs));
-	        	
-	        	var dbChartData = [];
-	        	docs.forEach(function(element, index, array){
-	        		dbChartData.push(element.data[0]);
-	        	});
-	        	
-	        	result = 'stocks data: '+JSON.stringify(docs);
-		        ws.send(JSON.stringify(dbChartData));
-			});
+	  		getStockData(msg, "",null,req,ws);
 	  	});
 	});
 	app.ws('/removestock', function(ws, res){
