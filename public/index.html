@@ -77,7 +77,6 @@
 			    	var legendItem = '<div class="alert alert-info alert-dismissible col-xs-4 col-sm-3 col-md-2 col-lg-2 legend-item" role="alert"><button type="button" class="close" id="'+element.stock+'" data-dismiss="alert" onclick="removeData(this);" aria-label="Close"><span aria-hidden="true">&times;</span></button><span class="stock-code">'+element.stock+'</span></div>';
 			    	$('#legend').append(legendItem);
 		    	});
-
 		    	console.log('chartDataFiltered: '+JSON.stringify(chartDataFiltered));
 			    var seriesOptions = [];
 			    function createChart() {
@@ -116,7 +115,6 @@
 	                };
 			    });
 	            createChart();
-	            
 				$("#lookup").autocomplete({
 			    	source: function(request,response){
 			      		console.log(request.term);
@@ -140,7 +138,6 @@
 			  	});
 			  	
 			}
-			
 			function removeData(obj){
 				var stockCode = obj.id;
 				console.log('data removal invoked, object id: '+stockCode);
