@@ -178,8 +178,14 @@ module.exports = function (app, passport, jsdom, fs) {
 			Stocks.remove({ _id: msg }, function(err,data){
 				if (err) throw err;
 				console.log(data);
-				var result = 'stocks data: '+JSON.stringify(data);
-		        ws.send(result);
+				Stocks.find({}, function(err, docs) {
+			    	if (err) throw err;
+			        var dbChartData = [];
+		        	docs.forEach(function(element, index, array){
+		        		dbChartData.push(element.data[0]);
+		        	});
+			        ws.send(JSON.stringify(dbChartData));
+		        });
 			});
 		});
 	});

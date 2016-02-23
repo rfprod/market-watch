@@ -148,6 +148,8 @@
 			    }
 			    conn.onmessage = function(evt){
 				    console.info("Received "+JSON.stringify(evt.data));
+				    $('.chart-data').html(evt.data);
+					updateChart();
 				    conn.close();
 			    }
 			    conn.onerror = function(error){
