@@ -175,6 +175,7 @@
 			    }
 			    conn.onclose = function(){
 				    console.log("Connection closed");
+				    conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
 			    }
 			}
 		</script>
