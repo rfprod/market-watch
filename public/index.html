@@ -63,6 +63,23 @@
 		<script>
 		    $(document).on('ready',function(){
 		    	updateChart();
+		    	
+		    	var conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
+				conn.onopen = function(){
+					console.log("Websocket connection to / opened");
+				}
+				conn.onmessage = function(evt){
+					console.info("Received "+JSON.stringify(evt.data));
+					$('.chart-data').html(evt.data);
+					updateChart();
+				}
+				conn.onerror = function(error){
+					console.error("Error:"+JSON.stringify(error));
+				}
+				conn.onclose = function(){
+					console.log("Websocket connection to / closed");
+					conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
+				}
 		    });
 			
 			function updateChart() {

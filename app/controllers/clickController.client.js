@@ -5,7 +5,6 @@
    var chartData = document.querySelector('.chart-data');
    var loginHref = document.querySelector('#login-href');
    var apiUrlClicks = appUrl + '/api/:id/clicks';
-   var apiUrlGetRemote = appUrl + '/api/clicks/venues';
    if (addStockButton){
       addStockButton.addEventListener('click', function(){
          var stockCode = document.getElementsByTagName('input')[0].value;
