@@ -158,7 +158,9 @@ module.exports = function (app, passport, jsdom, fs) {
 	        	docs.forEach(function(element, index, array){
 	        		dbChartData.push(element.data[0]);
 	        	});
-		        ws.send(JSON.stringify(dbChartData));
+		        ws.send(JSON.stringify(dbChartData),function(error) {
+				    throw error;
+				});
 	        });
 		});
 	}
@@ -170,6 +172,12 @@ module.exports = function (app, passport, jsdom, fs) {
 	  		console.log('stock code: '+msg);
 	  		getStockData(msg, "",null,req,ws);
 	  	});
+	  	ws.on('close', function() {
+	        console.log('Client disconnected.');
+	    });
+	    ws.on('error', function() {
+	        console.log('ERROR');
+	    });
 	});
 	app.ws('/removestock', function(ws, res){
 		console.log('/removestock');
@@ -184,10 +192,18 @@ module.exports = function (app, passport, jsdom, fs) {
 		        	docs.forEach(function(element, index, array){
 		        		dbChartData.push(element.data[0]);
 		        	});
-			        ws.send(JSON.stringify(dbChartData));
+			        ws.send(JSON.stringify(dbChartData),function(error) {
+				    	throw error;
+					});
 		        });
 			});
 		});
+		ws.on('close', function() {
+	        console.log('Client disconnected.');
+	    });
+	    ws.on('error', function() {
+	        console.log('ERROR');
+	    });
 	});
 	
 	app.ws('/', function (ws,res) {
@@ -207,7 +223,9 @@ module.exports = function (app, passport, jsdom, fs) {
 	        	if (dbChartData.length != dbChartDataUpdate.length){
 	        		console.log('stocks data changed');
 	        		dbChartData = dbChartDataUpdate;
-	        		ws.send(JSON.stringify(dbChartData));
+	        		ws.send(JSON.stringify(dbChartData),function(error) {
+	        			throw error;
+					});
 	        	}else{
 	        		console.log('stock data not changed');
 	        	}
