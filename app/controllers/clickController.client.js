@@ -18,6 +18,7 @@
 				chartData.innerHTML = evt.data;
 				updateChart();
 				conn.close();
+				conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
 			}
 			conn.onerror = function(error){
 				console.error("Error:"+JSON.stringify(error));
@@ -25,7 +26,6 @@
 			}
 			conn.onclose = function(){
 				console.log("Connection closed");
-				conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
 			}
       });
    }

@@ -159,7 +159,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	        		dbChartData.push(element.data[0]);
 	        	});
 		        ws.send(JSON.stringify(dbChartData),function(error) {
-				    throw error;
+				    if (error) throw error;
 				});
 	        });
 		});
@@ -193,7 +193,7 @@ module.exports = function (app, passport, jsdom, fs) {
 		        		dbChartData.push(element.data[0]);
 		        	});
 			        ws.send(JSON.stringify(dbChartData),function(error) {
-				    	throw error;
+				    	if (error) throw error;
 					});
 		        });
 			});
@@ -224,7 +224,7 @@ module.exports = function (app, passport, jsdom, fs) {
 	        		console.log('stocks data changed');
 	        		dbChartData = dbChartDataUpdate;
 	        		ws.send(JSON.stringify(dbChartData),function(error) {
-	        			throw error;
+	        			if (error) throw error;
 					});
 	        	}else{
 	        		console.log('stock data not changed');
