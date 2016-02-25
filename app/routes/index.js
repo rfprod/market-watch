@@ -182,10 +182,10 @@ module.exports = function (app, passport, jsdom, fs) {
 	  		getStockData(msg, "",null,req,ws);
 	  	});
 	  	ws.on('close', function() {
-	        console.log('Client disconnected.');
+	        console.log('Add Stock: Client disconnected.');
 	    });
 	    ws.on('error', function() {
-	        console.log('ERROR');
+	        console.log('Add stock: ERROR');
 	    });
 	});
 	app.ws('/removestock', function(ws, res){
@@ -208,10 +208,10 @@ module.exports = function (app, passport, jsdom, fs) {
 			});
 		});
 		ws.on('close', function() {
-	        console.log('Client disconnected.');
+	        console.log('Remove stock: Client disconnected.');
 	    });
 	    ws.on('error', function() {
-	        console.log('ERROR');
+	        console.log('Remove stock: ERROR');
 	    });
 	});
 	
@@ -239,7 +239,14 @@ module.exports = function (app, passport, jsdom, fs) {
 	        		console.log('stock data not changed');
 	        	}
 	        });
-		}, 5000);
+		}, 3000);
+		ws.on('close', function() {
+	        console.log('Persistent websocket: Client disconnected.');
+	        ws._socket.setKeepAlive(true);
+	    });
+	    ws.on('error', function() {
+	        console.log('Persistent websocket: ERROR');
+	    });
 	});
 	
 	app.route('/').get(function (req, res) {

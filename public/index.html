@@ -63,23 +63,23 @@
 		<script>
 		    $(document).on('ready',function(){
 		    	updateChart();
-		    	
-		    	var conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
-				conn.onopen = function(){
+		    	var connPersistent = new WebSocket("wss://market-watch-rfprod.c9users.io/");
+				connPersistent.onopen = function(){
 					console.log("Websocket connection to / opened");
-				}
-				conn.onmessage = function(evt){
+				};
+				connPersistent.onmessage = function(evt){
 					console.info("Received "+JSON.stringify(evt.data));
 					$('.chart-data').html(evt.data);
 					updateChart();
-				}
-				conn.onerror = function(error){
+				};
+				connPersistent.onerror = function(error){
 					console.error("Error:"+JSON.stringify(error));
-				}
-				conn.onclose = function(){
+					connPersistent = new WebSocket("wss://market-watch-rfprod.c9users.io/");
+				};
+				connPersistent.onclose = function(){
 					console.log("Websocket connection to / closed");
-					new WebSocket("wss://market-watch-rfprod.c9users.io/");
-				}
+					connPersistent = new WebSocket("wss://market-watch-rfprod.c9users.io/");
+				};
 		    });
 			
 			function updateChart() {
@@ -158,24 +158,23 @@
 			function removeData(obj){
 				var stockCode = obj.id;
 				console.log('data removal invoked, object id: '+stockCode);
-				var conn = new WebSocket("wss://market-watch-rfprod.c9users.io/removestock");
-			    conn.onopen = function(){
-				    console.log("Connection opened");
-				    conn.send(stockCode);
+				var connRemove = new WebSocket("wss://market-watch-rfprod.c9users.io/removestock");
+			    connRemove.onopen = function(){
+				    console.log("Removing stock. Connection opened");
+				    connRemove.send(stockCode);
 			    }
-			    conn.onmessage = function(evt){
+			    connRemove.onmessage = function(evt){
 				    console.info("Received "+JSON.stringify(evt.data));
 				    $('.chart-data').html(evt.data);
-					updateChart();
-				    //conn.close();
-				    new WebSocket("wss://market-watch-rfprod.c9users.io/");
+					//updateChart();
+				    connRemove.close();
 			    };
-			    conn.onerror = function(error){
+			    connRemove.onerror = function(error){
 				    console.error("Error:"+JSON.stringify(error));
-				    //conn.close();
+				    connRemove.close();
 			    };
-			    conn.onclose = function(){
-				    console.log("Connection closed");
+			    connRemove.onclose = function(){
+				    console.log("Stock removed. Connection closed");
 			    };
 			}
 		</script>

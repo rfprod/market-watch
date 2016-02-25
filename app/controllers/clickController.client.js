@@ -8,29 +8,27 @@
    if (addStockButton){
       addStockButton.addEventListener('click', function(){
          var stockCode = document.getElementsByTagName('input')[0].value;
-         var conn = new WebSocket("wss://market-watch-rfprod.c9users.io/addstock");
-			conn.onopen = function(){
-				console.log("Connection opened");
-				conn.send(stockCode);
+         var connAdd = new WebSocket("wss://market-watch-rfprod.c9users.io/addstock");
+			connAdd.onopen = function(){
+				console.log("Adding stock. Connection opened");
+				connAdd.send(stockCode);
 			};
-			conn.onmessage = function(evt){
+			connAdd.onmessage = function(evt){
 				if (evt.data != 'no data'){
 					console.info("Received "+JSON.stringify(evt.data));
 					chartData.innerHTML = evt.data;
-					updateChart();
-					//conn.close();
+					//updateChart();
 				}else{
 					alert(evt.data);
 				}
-				new WebSocket("wss://market-watch-rfprod.c9users.io/");
+				connAdd.close();
 			};
-			conn.onerror = function(error){
+			connAdd.onerror = function(error){
 				console.error("Error:"+JSON.stringify(error));
-				alert(error);
-				//conn.close();
+				connAdd.close();
 			};
-			conn.onclose = function(){
-				console.log("Connection closed");
+			connAdd.onclose = function(){
+				console.log("Stock added. Connection closed");
 			};
       });
    }
