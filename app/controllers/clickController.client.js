@@ -12,21 +12,26 @@
 			conn.onopen = function(){
 				console.log("Connection opened");
 				conn.send(stockCode);
-			}
+			};
 			conn.onmessage = function(evt){
-				console.info("Received "+JSON.stringify(evt.data));
-				chartData.innerHTML = evt.data;
-				updateChart();
-				conn.close();
-				conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
-			}
+				if (evt.data != 'no data'){
+					console.info("Received "+JSON.stringify(evt.data));
+					chartData.innerHTML = evt.data;
+					updateChart();
+					//conn.close();
+				}else{
+					alert(evt.data);
+				}
+				new WebSocket("wss://market-watch-rfprod.c9users.io/");
+			};
 			conn.onerror = function(error){
 				console.error("Error:"+JSON.stringify(error));
-				conn.close();
-			}
+				alert(error);
+				//conn.close();
+			};
 			conn.onclose = function(){
 				console.log("Connection closed");
-			}
+			};
       });
    }
 })();

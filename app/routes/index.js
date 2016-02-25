@@ -39,8 +39,12 @@ module.exports = function (app, passport, jsdom, fs) {
 		  	response.on('data', (chunk) => {body += chunk;});
 		  	response.on('end', () => {
 				var json = JSON.parse(body);
-				if (template != "") callbackJSDOM(json,template,req,res);
-				else callbackWS(json,req,ws);
+				if (typeof json.Elements[0] != 'undefined'){
+					if (template != "") callbackJSDOM(json,template,req,res);
+					else callbackWS(json,req,ws);
+				}else{
+					callbackError(req,ws);
+				}
 		  	});
 		}).on('error', (e) => {
 		  	console.log(`Got error: ${e.message}`);
@@ -162,6 +166,11 @@ module.exports = function (app, passport, jsdom, fs) {
 				    if (error) throw error;
 				});
 	        });
+		});
+	}
+	function callbackError(req,ws){
+        ws.send('no data',function(error) {
+		    if (error) throw error;
 		});
 	}
 

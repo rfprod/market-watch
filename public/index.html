@@ -78,7 +78,7 @@
 				}
 				conn.onclose = function(){
 					console.log("Websocket connection to / closed");
-					conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
+					new WebSocket("wss://market-watch-rfprod.c9users.io/");
 				}
 		    });
 			
@@ -167,16 +167,16 @@
 				    console.info("Received "+JSON.stringify(evt.data));
 				    $('.chart-data').html(evt.data);
 					updateChart();
-				    conn.close();
-				    conn = new WebSocket("wss://market-watch-rfprod.c9users.io/");
-			    }
+				    //conn.close();
+				    new WebSocket("wss://market-watch-rfprod.c9users.io/");
+			    };
 			    conn.onerror = function(error){
 				    console.error("Error:"+JSON.stringify(error));
-				    conn.close();
-			    }
+				    //conn.close();
+			    };
 			    conn.onclose = function(){
 				    console.log("Connection closed");
-			    }
+			    };
 			}
 		</script>
 	</body>
